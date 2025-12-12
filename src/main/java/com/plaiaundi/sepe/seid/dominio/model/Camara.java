@@ -32,6 +32,10 @@ public class Camara implements EModel{
         this.carretera = carretera;
     }
 
+    public Camara() {
+        //TODO Auto-generated constructor stub
+    }
+
     // Getters y setters 
     public String getId()                       { return id;                    }
     public void setId(String id)                { this.id = id;                 }
