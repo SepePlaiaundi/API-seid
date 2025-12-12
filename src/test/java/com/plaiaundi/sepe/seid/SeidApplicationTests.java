@@ -1,6 +1,4 @@
-package com.plaiaundi.sepe.seid.seid;
-
-import static org.junit.Assert.assertTrue;
+package com.plaiaundi.sepe.seid;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,7 +8,6 @@ class SeidApplicationTests {
 
 	@Test
 	void contextLoads() {
-		assertTrue(true);
 	}
 
 }
