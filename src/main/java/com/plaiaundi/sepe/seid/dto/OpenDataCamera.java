@@ -53,8 +53,6 @@ public class OpenDataCamera {
     public void setSourceId(String sourceId)        { this.sourceId = sourceId;     }
 
     public String getUrlImage()                     { return urlImage;              }
-    public void setUrlImage(String urlImage)        { this.urlImage = urlImage;     }
-
-    
+    public void setUrlImage(String urlImage)        { this.urlImage = urlImage;     }   
 
 }
