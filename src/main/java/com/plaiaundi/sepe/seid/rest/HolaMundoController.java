@@ -1,20 +1,25 @@
 package com.plaiaundi.sepe.seid.rest;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @RestController
+@RequestMapping("/holaMundo")
 public class HolaMundoController {
 
     @JsonPropertyOrder({ "id", "nombre", "rol" })
@@ -56,7 +61,14 @@ public class HolaMundoController {
      * devuelve el formato en el el pedido de cara a ser usado mas facilmente
      * @return
      */
-    @GetMapping("/usuarios")
+    @GetMapping(
+        value = "/usuarios", 
+        produces = { 
+            MediaType.APPLICATION_JSON_VALUE, 
+            MediaType.APPLICATION_XML_VALUE, 
+            "text/csv" 
+        }
+    )
     public List<Usuario> obtenerUsuario() {
         return List.of(
             new Usuario("1", "Ana Garcia", "Admin"),
@@ -106,4 +118,13 @@ public class HolaMundoController {
     public Map<String, Object> obtenerPorId(@PathVariable Long id) {
         return Map.of("id", id);
     }
+
+    @PutMapping(
+        value = "/remplazar", 
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public String remplazar() {return "True";}
+
+    @PatchMapping("/actualizar/{valor}")
+    public String remplazar(@PathVariable String valor) {return valor;}
 }
