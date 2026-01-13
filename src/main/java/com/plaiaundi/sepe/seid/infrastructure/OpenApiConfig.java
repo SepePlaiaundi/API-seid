@@ -20,23 +20,7 @@ public class OpenApiConfig {
                 new Info()
                     .title("API SEID")
                     .version("1.0")
-                    .description("Documentación de la API con seguridad JWT")
-            )
-            // Configuración de Seguridad
-            .addSecurityItem(
-                new SecurityRequirement()
-                    .addList("bearerAuth")
-            )
-            .components(
-                new Components()
-                    .addSecuritySchemes(
-                        "bearerAuth",
-                        new SecurityScheme()
-                            .name("Autentificacion")
-                            .type(SecurityScheme.Type.HTTP)
-                            .scheme("bearer")
-                            .bearerFormat("JWT")
-                    )
+                    .description("Documentación de la API")
             );
     }
 }

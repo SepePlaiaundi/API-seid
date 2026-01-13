@@ -1,9 +1,19 @@
 package com.plaiaundi.sepe.seid.dominio.model;
 
-public class Camara implements EModel{
+import org.hibernate.annotations.IdGeneratorType;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="camaras")
+public class Camara{
     
     // Atributos
+    @Id
     private String id;
+    
     private String direccion;
     private String nombre;
     private String kilometro;
@@ -12,8 +22,8 @@ public class Camara implements EModel{
     private String carretera;
     //private Recurso recurso; // TODO: crear modelo recuros
     //private Imagen imagen; // TODO: crear modelo de imagen
-    
-    // Constructor
+
+    /** Constructor explicito */
     public Camara(
         String id, 
         String direccion, 
@@ -32,9 +42,8 @@ public class Camara implements EModel{
         this.carretera = carretera;
     }
 
-    public Camara() {
-        //TODO Auto-generated constructor stub
-    }
+    /** Contructor implicito */
+    public Camara() {}
 
     // Getters y setters 
     public String getId()                       { return id;                    }
@@ -57,8 +66,5 @@ public class Camara implements EModel{
 
     public String getCarretera()                { return carretera;             }
     public void setCarretera(String carretera)  { this.carretera = carretera;   }
-
-    
-
 
 }
