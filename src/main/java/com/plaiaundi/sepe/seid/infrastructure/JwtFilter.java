@@ -4,25 +4,34 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.plaiaundi.sepe.seid.dominio.model.JwtService;
 
 import java.io.IOException;
 
+@Component
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
 
     @Autowired
     private JwtService jwtService;
 
     @Autowired
+    @Lazy
     private UserDetailsService userDetailsService; // Para cargar los datos del usuario real
 
     @Override
@@ -68,7 +77,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 // Si el usuario no existe (UsernameNotFoundException) o hay otro error,
                 // NO lanzamos excepción. Simplemente no autenticamos y dejamos pasar la petición.
                 // Si la ruta era protegida, Spring Security devolverá 403 después.
-                System.out.println("Error en autenticación JWT: " + e.getMessage());
+                logger.error("No se pudo establecer la autenticación JWT: {}", e.getMessage());
             }
         }
 

@@ -5,7 +5,10 @@ public class AuthRequest {
     private String password;
 
     // Constructor vacío
-    public AuthRequest() {}
+    public AuthRequest(String usuario, String contrasena) {
+        this.username = usuario;
+        this.password = contrasena;
+    }
 
     // Getters y setters
     public String getUsername() {
