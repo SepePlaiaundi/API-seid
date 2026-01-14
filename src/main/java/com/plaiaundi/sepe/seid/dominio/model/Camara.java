@@ -1,5 +1,7 @@
 package com.plaiaundi.sepe.seid.dominio.model;
 
+import java.net.URL;
+
 import org.hibernate.annotations.IdGeneratorType;
 
 import jakarta.persistence.Entity;
@@ -21,7 +23,7 @@ public class Camara{
     private String longitud;
     private String carretera;
     //private Recurso recurso; // TODO: crear modelo recuros
-    //private Imagen imagen; // TODO: crear modelo de imagen
+    private URL urlImage;
 
     /** Constructor explicito */
     public Camara(
@@ -66,5 +68,8 @@ public class Camara{
 
     public String getCarretera()                { return carretera;             }
     public void setCarretera(String carretera)  { this.carretera = carretera;   }
+
+    public URL getUrlImage()                    { return urlImage;              }
+    public void setUrlImage(URL urlImagen)      { this.urlImage = urlImagen;    }
 
 }

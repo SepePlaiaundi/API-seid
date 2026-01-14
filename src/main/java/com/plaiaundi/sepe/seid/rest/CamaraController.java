@@ -1,12 +1,16 @@
 package com.plaiaundi.sepe.seid.rest;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 
+import com.plaiaundi.sepe.seid.dominio.dao.CamaraRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Camara;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamaraResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
@@ -16,6 +20,8 @@ import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
 @RequestMapping("/camara")
 public class CamaraController {
 
+    @Autowired
+    private CamaraRepository camaraRepository;
     private final RestClient restClient;
 
     public CamaraController(RestClient restClient) {
@@ -60,6 +66,27 @@ public class CamaraController {
         
         for (OpenDataCamaraResponse respuesta: result) {
             camaras.addAll(respuesta.cameras());
+        }
+ 
+        camaras.removeIf(camara -> camara.urlImage() == null);
+        camaras.removeIf(camara -> camara.latitude() == null);
+        camaras.removeIf(camara -> camara.longitude() == null);
+
+        for (OpenDataCamera camara: camaras) {
+            Camara cam = new Camara();
+            cam.setId(camara.cameraId());
+            cam.setCarretera(camara.road());
+            cam.setDireccion(camara.address());
+            cam.setKilometro(camara.kilometer());
+            cam.setLatitud(camara.latitude());
+            cam.setLongitud(camara.longitude());
+            cam.setNombre(camara.cameraName());
+            try {
+                cam.setUrlImage(new URL(camara.urlImage()));
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            camaraRepository.save(cam);
         }
 
         return camaras;
