@@ -5,8 +5,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.plaiaundi.sepe.seid.dominio.services.ApiTrafico;
 import com.plaiaundi.sepe.seid.dominio.services.CameraService;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.apache.bcel.classfile.Module;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
@@ -26,63 +28,56 @@ public class CameraController {
     private CameraRepository cameraRepository;
     @Autowired
     private CameraService cameraService;
+    @Autowired
+    private ApiTrafico apiTrafico;
+
     private final RestClient restClient;
 
     public CameraController(RestClient restClient) {
         this.restClient = restClient;
     }
-    
-    @GetMapping("")
-    public List<Camera> listaDeCamaras() {
-        List<OpenDataCameraResponse> result = new ArrayList<>();
-        List<OpenDataCamera> camaras = new ArrayList<>();
 
-        // 1. Hacemos la primera petición para ver cuántas páginas hay
-        OpenDataCameraResponse primeraPagina = restClient.get()
-                .uri("v1.0/cameras?_page=1")
+    private OpenDataCameraResponse llamarApiCameras(int numPagina) {
+        return restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1.0/cameras")
+                        .queryParam("_page", numPagina)
+                        .build()
+                )
                 .retrieve()
                 .body(OpenDataCameraResponse.class);
+    }
 
-        if (primeraPagina != null) {
-            // 2. Leemos el total de páginas de la respuesta
-            int totalPaginas = primeraPagina.totalPages();
+    private List<OpenDataCameraResponse> pedirCamarasOpenDataTrafico() {
+        List<OpenDataCameraResponse> result = new ArrayList<>();
 
-            // 3. Iteramos desde la 2 hasta el final exacto
-            for (int i = totalPaginas; i > 0; i--) {
-                int paginaActual = i; // Variable efectiva final para la lambda
-                
-                OpenDataCameraResponse pagina = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                        .path("/v1.0/cameras")
-                        .queryParam("_page", paginaActual)
-                        .build()
-                    )
-                    .retrieve()
-                    .body(OpenDataCameraResponse.class);
-                
-                if (pagina != null) {
-                    result.add(pagina);
-                }
+        OpenDataCameraResponse primeraPagina = llamarApiCameras(1);
+
+        if (primeraPagina == null) { return null; }
+
+        int totalPaginas = primeraPagina.totalPages();
+
+        for (int i = totalPaginas; i > 0; i--) {
+            OpenDataCameraResponse pagina = llamarApiCameras(i);
+            if (pagina != null) {
+                result.add(pagina);
             }
         }
-        
-        for (OpenDataCameraResponse respuesta: result) {
-            camaras.addAll(respuesta.cameras());
-        }
- 
-        camaras.removeIf(camara -> camara.urlImage() == null);
-        camaras.removeIf(camara -> camara.latitude() == null);
-        camaras.removeIf(camara -> camara.longitude() == null);
 
+        return result;
+    }
+
+    @GetMapping
+    public List<Camera> listaDeCamaras() {
         List<Camera> camarasDominio = new ArrayList<>();
-        for (OpenDataCamera camara: camaras) {
+        for (OpenDataCamera camara: apiTrafico.getAllCameras()) {
             Camera cam = cameraService.parseFromOpenDataCamera(camara);
             if (cam == null) { continue; }
             cameraRepository.save(cam);
             camarasDominio.add(cam);
             log.info("Insertada camara " + cam.getId());
         }
-        return cameraRepository.findAll();
+        return camarasDominio;
     }
 
 }
