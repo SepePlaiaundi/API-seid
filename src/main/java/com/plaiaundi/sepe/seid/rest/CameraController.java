@@ -5,6 +5,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.plaiaundi.sepe.seid.dominio.services.CameraService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
@@ -15,12 +17,15 @@ import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
 
 
+@Slf4j
 @RestController
 @RequestMapping("/camara")
 public class CameraController {
 
     @Autowired
     private CameraRepository cameraRepository;
+    @Autowired
+    private CameraService cameraService;
     private final RestClient restClient;
 
     public CameraController(RestClient restClient) {
@@ -43,7 +48,7 @@ public class CameraController {
             int totalPaginas = primeraPagina.totalPages();
 
             // 3. Iteramos desde la 2 hasta el final exacto
-            for (int i = totalPaginas; i < 0; i--) {
+            for (int i = totalPaginas; i > 0; i--) {
                 int paginaActual = i; // Variable efectiva final para la lambda
                 
                 OpenDataCameraResponse pagina = restClient.get()
@@ -71,23 +76,13 @@ public class CameraController {
 
         List<Camera> camarasDominio = new ArrayList<>();
         for (OpenDataCamera camara: camaras) {
-            Camera cam = new Camera();
-            try {
-                cam.setId(          camara.cameraId());
-                cam.setCarretera(   camara.road());
-                cam.setDireccion(   camara.address());
-                cam.setKilometro(   camara.kilometer());
-                cam.setLatitud(     camara.latitude());
-                cam.setLongitud(    camara.longitude());
-                cam.setNombre(      camara.cameraName());
-                cam.setUrlImage(    new URL(camara.urlImage()));
-                cameraRepository.save(cam);
-                camarasDominio.add(cam);
-            } catch (MalformedURLException e) {
-                continue;
-            }
+            Camera cam = cameraService.parseFromOpenDataCamera(camara);
+            if (cam == null) { continue; }
+            cameraRepository.save(cam);
+            camarasDominio.add(cam);
+            log.info("Insertada camara " + cam.getId());
         }
-        return camarasDominio;
+        return cameraRepository.findAll();
     }
 
 }
