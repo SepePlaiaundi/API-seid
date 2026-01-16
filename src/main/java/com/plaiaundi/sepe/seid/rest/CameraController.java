@@ -4,12 +4,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import com.plaiaundi.sepe.seid.dominio.services.ApiTrafico;
 import com.plaiaundi.sepe.seid.dominio.services.CameraService;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.apache.bcel.classfile.Module;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 
@@ -37,47 +41,29 @@ public class CameraController {
         this.restClient = restClient;
     }
 
-    private OpenDataCameraResponse llamarApiCameras(int numPagina) {
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1.0/cameras")
-                        .queryParam("_page", numPagina)
-                        .build()
-                )
-                .retrieve()
-                .body(OpenDataCameraResponse.class);
-    }
-
-    private List<OpenDataCameraResponse> pedirCamarasOpenDataTrafico() {
-        List<OpenDataCameraResponse> result = new ArrayList<>();
-
-        OpenDataCameraResponse primeraPagina = llamarApiCameras(1);
-
-        if (primeraPagina == null) { return null; }
-
-        int totalPaginas = primeraPagina.totalPages();
-
-        for (int i = totalPaginas; i > 0; i--) {
-            OpenDataCameraResponse pagina = llamarApiCameras(i);
-            if (pagina != null) {
-                result.add(pagina);
-            }
-        }
-
-        return result;
-    }
-
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Camera> listaDeCamaras() {
-        List<Camera> camarasDominio = new ArrayList<>();
-        for (OpenDataCamera camara: apiTrafico.getAllCameras()) {
-            Camera cam = cameraService.parseFromOpenDataCamera(camara);
-            if (cam == null) { continue; }
-            cameraRepository.save(cam);
-            camarasDominio.add(cam);
-            log.info("Insertada camara " + cam.getId());
-        }
-        return camarasDominio;
+        log.info("GET /camara");
+        // Respuesta instantánea desde MySQL (milisegundos)
+        // Ya no hay riesgo de excepciones de red ni esperas.
+        return cameraRepository.findAll();
+    }
+
+    @GetMapping(value="/byPosition/{longitud}/{latitud}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Camera> listaDeCamaras(
+            @PathVariable String longitud,
+            @PathVariable String latitud
+    ) {
+        log.info("GET /camara/byPosition/{}/{}", longitud, latitud);
+        return cameraRepository.findByLatitudAndLongitud(longitud, latitud);
+    }
+
+    @GetMapping(value="/byId/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Camera camara(
+            @PathVariable String id
+    ) {
+        log.info("GET /camara/byPosition/{}", id);
+        return cameraRepository.findById(id);
     }
 
 }
