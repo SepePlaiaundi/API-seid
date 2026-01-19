@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>Bienvenido a SEID</title>
+</head>
+<body style="margin:0;padding:0;background-color:#121212;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;color:#ffffff;">
+
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#121212;padding:40px 0;">
+    <tr>
+        <td align="center">
+
+            <!-- Container -->
+            <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;background-color:#1e1e1e;border:1px solid #333333;border-radius:12px;overflow:hidden;">
+
+                <!-- Header -->
+                <tr>
+                    <td align="center" style="padding:30px;">
+                        <img src="https://res.cloudinary.com/dubiknu7g/image/upload/v1768845595/SEID_TRANSPARENT_gskhmi.png"
+                             alt="SEID TrafficMap"
+                             width="200"
+                             style="display:block;border:0;outline:none;text-decoration:none;">
+                    </td>
+                </tr>
+
+                <!-- Content -->
+                <tr>
+                    <td style="padding:0 30px 30px 30px;text-align:center;">
+
+                        <h1 style="margin:0 0 10px 0;font-size:24px;color:#FFC107;font-weight:600;"
+                            th:text="'¡Hola, ' + ${nombre} + '!'">
+                            ¡Hola, Usuario!
+                        </h1>
+
+                        <p style="margin:0 0 20px 0;font-size:16px;line-height:1.6;color:#e0e0e0;">
+                            Te damos la bienvenida a la plataforma de gestión de tráfico e incidencias de <strong>SEID</strong>.
+                        </p>
+
+                        <!-- Feature box -->
+                        <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                               style="background-color:#262626;border-radius:8px;border-left:4px solid #FFC107;margin:20px 0;">
+                            <tr>
+                                <td style="padding:15px;text-align:left;font-size:14px;color:#e0e0e0;">
+                                    <p style="margin:0 0 8px 0;">📹 <strong>Cámaras:</strong> Visualiza puntos críticos en tiempo real.</p>
+                                    <p style="margin:0;">⚠️ <strong>Incidencias:</strong> Reporta y consulta alertas viales.</p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="margin:0 0 25px 0;font-size:16px;line-height:1.6;color:#e0e0e0;">
+                            Tu cuenta ha sido configurada correctamente. Ya puedes acceder al mapa interactivo.
+                        </p>
+
+                        <!-- Button -->
+                        <table cellpadding="0" cellspacing="0" role="presentation" align="center">
+                            <tr>
+                                <td bgcolor="#FFC107" style="border-radius:25px;">
+                                    <a href="https://tu-app-url.com/mapa"
+                                       style="display:inline-block;padding:14px 30px;font-size:14px;
+                                          font-weight:bold;color:#000000;text-decoration:none;
+                                          letter-spacing:1px;text-transform:uppercase;">
+                                        Explorar el mapa
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td align="center" style="padding:20px;font-size:12px;color:#777777;">
+                        <p style="margin:0 0 5px 0;">© 2026 SePe. Todos los derechos reservados.</p>
+                        <p style="margin:0;">Has recibido este correo porque te registraste en nuestra plataforma de tráfico.</p>
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+
+</table>
+
+</body>
+</html>
