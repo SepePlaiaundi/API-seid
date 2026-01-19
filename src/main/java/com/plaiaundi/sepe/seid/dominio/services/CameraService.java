@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClient;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Service

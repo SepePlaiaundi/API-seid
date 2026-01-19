@@ -46,7 +46,7 @@ public class CameraController {
         log.info("GET /camara");
         // Respuesta instantánea desde MySQL (milisegundos)
         // Ya no hay riesgo de excepciones de red ni esperas.
-        return cameraRepository.findAll();
+        return cameraRepository.findAllByState(Camera.Estado.ACTIVA);
     }
 
     @GetMapping(value="/byPosition/{longitud}/{latitud}", produces = MediaType.APPLICATION_JSON_VALUE)

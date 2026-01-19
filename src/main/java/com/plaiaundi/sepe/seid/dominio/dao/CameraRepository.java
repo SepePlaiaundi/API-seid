@@ -12,5 +12,5 @@ public interface CameraRepository extends JpaRepository<Camera, Integer> {
 
     List<Camera> findByLatitudAndLongitud(String latitud, String longitud);
     Camera findById(String id);
-
+    List<Camera> findAllByState(String estado);
 }
