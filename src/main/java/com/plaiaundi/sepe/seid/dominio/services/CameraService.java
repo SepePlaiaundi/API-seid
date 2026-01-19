@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -38,34 +39,62 @@ public class CameraService {
         }
 
         Camera cam = new Camera();
+        cam.setId(camara.cameraId());
+        cam.setCarretera(camara.road());
+        cam.setDireccion(camara.address());
+        cam.setKilometro(camara.kilometer());
+        cam.setLatitud(camara.latitude());
+        cam.setLongitud(camara.longitude());
+        cam.setNombre(camara.cameraName());
+
         try {
-            cam.setId(camara.cameraId());
-            cam.setCarretera(camara.road());
-            cam.setDireccion(camara.address());
-            cam.setKilometro(camara.kilometer());
-            cam.setLatitud(camara.latitude());
-            cam.setLongitud(camara.longitude());
-            cam.setNombre(camara.cameraName());
-
-            String url = camara.urlImage();
-            if (url.startsWith("http://www.trafikoa.net")) {
-                url = url.replace("http://www.trafikoa.net", "https://apps.trafikoa.euskadi.eus");
-            }
-            cam.setUrlImage(new URL(url));
-
-            // Guardamos en BD
-            cameraRepository.save(cam);
-
-            log.info("Cámara guardada: " + cam.getId() + " - " + Thread.currentThread().getName());
-
-            return CompletableFuture.completedFuture(cam);
-
-        } catch (MalformedURLException e) {
+            cam.setUrlImage(fromOpenDataCameraToURL(camara));
+        } catch (Exception e) {
+            log.warn("URL erronea: " + camara.urlImage());
             return CompletableFuture.completedFuture(null);
         }
+
+        // Guardamos en BD
+        cameraRepository.save(cam);
+
+        log.info("Cámara guardada: " + cam.getId() + " - " + Thread.currentThread().getName());
+
+        return CompletableFuture.completedFuture(cam);
     }
 
     // --- Tus métodos privados siguen igual (se ejecutan dentro del hilo async) ---
+
+    private URL fromOpenDataCameraToURL(OpenDataCamera camara) throws Exception {
+            String url = camara.urlImage();
+            log.info("URL recibida: " + url);
+
+            url = url.trim();
+
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    url = "http://" + url; 
+            }
+
+            url = parsearCamarasGuipuzkoa(url);
+                        
+            log.info("URL devuelta: "+url);
+            return URI.create(url).toURL();
+    }
+
+    private String parsearCamarasGuipuzkoa(String url) {
+        String[] inicios = {
+            "https://www.trafikoa.eus",
+            "http://www.trafikoa.eus",
+            "https://www.trafikoa.net",
+            "http://www.trafikoa.net",
+        };
+        
+        for(String inicio : inicios) {
+            if (url.startsWith(inicio)) {
+                url = url.replace(inicio, "https://apps.trafikoa.euskadi.eus");
+            }
+        }
+        return url;
+    }
 
     private boolean validarDatos(OpenDataCamera camara) {
         // Validamos nulos rápido
@@ -78,25 +107,23 @@ public class CameraService {
     }
 
     private boolean urlCamaraValida(OpenDataCamera camara) {
-        String url = camara.urlImage();
-        if (url == null) return false;
-
-        if (url.startsWith("http://www.trafikoa.net")) {
-            url = url.replace("http://www.trafikoa.net", "https://apps.trafikoa.euskadi.eus");
+        URL url;
+        try {
+            url = fromOpenDataCameraToURL(camara);
+        } catch (Exception e) {
+            return false;
         }
-
-        try { new URL(url); } catch (MalformedURLException e) { return false; }
-
         return urlIsOk(url);
     }
 
-    private boolean urlIsOk(String url) {
-        int code = getStatusCode(url);
+    private boolean urlIsOk(URL url) {
+        int code = getStatusCode(url.toString());
         return code > 199 && code < 299;
     }
 
     private int getStatusCode(String url) {
         try {
+            // TODO: Las camaras de guipuzkoa parsean bien pero no pasan la validacion
             // RestClient síncrono, pero como todo el método es Async, no bloquea al usuario
             ResponseEntity<Void> response = restClient.head()
                     .uri(url)

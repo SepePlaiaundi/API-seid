@@ -11,7 +11,7 @@ public class CameraTest {
 
     @Test
     void testConstructor() {
-        Camera cam = new Camera("t","e","s","t"," ","o","k");
+        Camera cam = new Camera();
         assertNotEquals(null, cam);
     }
 

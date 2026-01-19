@@ -35,7 +35,6 @@ public class CameraSyncWorker {
                 .toList();
 
 
-
         // 3. Esperamos a que el worker termine todo el trabajo
         // Aunque es background, usamos join() para que el método 'sincronizarCamaras'
         // no termine hasta que todas las cámaras estén procesadas.

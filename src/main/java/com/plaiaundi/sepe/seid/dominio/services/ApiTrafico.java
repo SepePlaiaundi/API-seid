@@ -2,8 +2,6 @@ package com.plaiaundi.sepe.seid.dominio.services;
 
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
 import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
-import com.plaiaundi.sepe.seid.dto.OpenDataIncidenceResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -13,8 +11,11 @@ import java.util.List;
 @Service
 public class ApiTrafico {
 
-    @Autowired
-    private RestClient restClient;
+    private final RestClient restClient;
+
+    public ApiTrafico(RestClient restClient) {
+        this.restClient = restClient;
+    }
 
     public List<OpenDataCamera> getAllCameras() {
         List<OpenDataCamera> result = new ArrayList<>();
