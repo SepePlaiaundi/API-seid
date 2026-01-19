@@ -1,10 +1,11 @@
 package com.plaiaundi.sepe.seid.rest;
+
 import com.plaiaundi.sepe.seid.dominio.services.EmailService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/emails")
 public class EmailController {
 
     private final EmailService emailService;
@@ -13,9 +14,12 @@ public class EmailController {
         this.emailService = emailService;
     }
 
-    @GetMapping("/send-test-email")
-    public String sendEmail(@RequestParam String email) {
-        emailService.sendWelcomeEmail(email);
-        return "Email enviado a " + email;
+    @PostMapping("/welcome")
+    public ResponseEntity<Void> sendWelcomeEmail(
+            @RequestParam String email,
+            @RequestParam(defaultValue = "Usuario") String nombre
+    ) {
+        emailService.sendWelcomeEmail(email, nombre);
+        return ResponseEntity.ok().build();
     }
 }
