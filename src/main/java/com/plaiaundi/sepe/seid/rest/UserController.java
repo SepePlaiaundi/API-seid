@@ -1,6 +1,7 @@
 package com.plaiaundi.sepe.seid.rest;
 
 import com.plaiaundi.sepe.seid.dominio.services.UserService;
+import com.plaiaundi.sepe.seid.dto.LoginResponse;
 import com.plaiaundi.sepe.seid.dto.UserLoginRequest;
 import com.plaiaundi.sepe.seid.dto.UserRegisterRequest;
 import com.plaiaundi.sepe.seid.infrastructure.security.JwtService;
@@ -10,6 +11,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -32,10 +35,11 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserLoginRequest request) {
+    public ResponseEntity<LoginResponse> login(
+            @RequestBody UserLoginRequest request) {
 
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.email(),
                             request.password()
@@ -44,10 +48,11 @@ public class UserController {
 
             String token = jwtService.generateToken(request.email());
 
-            return ResponseEntity.ok(token);
+            return ResponseEntity.ok(new LoginResponse(token));
 
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body("Credenciales incorrectas");
+            return ResponseEntity.status(401).build();
         }
     }
+
 }
