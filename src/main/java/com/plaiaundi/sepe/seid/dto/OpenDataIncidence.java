@@ -10,11 +10,16 @@ public record OpenDataIncidence (
         String province,
         String carRegistration,
         String cause,
+        String cityTown,
         String startDate,
+        String endDate,
         String road,
         String pkStart,
         String pkEnd,
         String direction,
         String latitude,
-        String longitude
+        String longitude,
+        String incidenceDescription,
+        String incidenceLevel,
+        String incidenceType
 ) {}

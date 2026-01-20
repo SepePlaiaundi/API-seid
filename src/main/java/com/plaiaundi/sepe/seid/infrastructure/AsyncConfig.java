@@ -13,13 +13,25 @@ import java.util.concurrent.Executor;
 public class AsyncConfig {
 
     @Bean(name = "hilosCamaras")
-    public Executor taskExecutor() {
+    public Executor poolHilosSincronizacionCamaras() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(10); // 10 hilos trabajando a la vez min
         executor.setMaxPoolSize(50);  // Hasta 50 si hay mucha carga
         executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("CamaraThread-");
+        executor.setThreadNamePrefix("Camara-Worker-");
         executor.initialize();
         return executor;
     }
+
+    @Bean(name = "hilosIncidencias")
+    public Executor poolHilosSincronizacionIncidencias() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10); // 10 hilos trabajando a la vez min
+        executor.setMaxPoolSize(50);  // Hasta 50 si hay mucha carga
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("Incidencias-Worker-");
+        executor.initialize();
+        return executor;
+    }
+
 }

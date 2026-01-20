@@ -1,7 +1,6 @@
 package com.plaiaundi.sepe.seid.infrastructure;
 
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
-import com.plaiaundi.sepe.seid.dominio.services.ApiTrafico;
 import com.plaiaundi.sepe.seid.dominio.services.CameraService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

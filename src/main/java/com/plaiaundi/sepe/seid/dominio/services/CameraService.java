@@ -3,6 +3,8 @@ package com.plaiaundi.sepe.seid.dominio.services;
 import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
+import com.plaiaundi.sepe.seid.infrastructure.ApiTrafico;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,9 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @Slf4j
 public class CameraService {
+
+    @Autowired 
+    private ApiTrafico apiTrafico;
 
     @Autowired
     private CameraRepository cameraRepository;
@@ -122,13 +127,15 @@ public class CameraService {
     }
 
     private int getStatusCode(String url) {
-        try {
+        try {      
             // TODO: Las camaras de guipuzkoa parsean bien pero no pasan la validacion
             // RestClient síncrono, pero como todo el método es Async, no bloquea al usuario
             ResponseEntity<Void> response = restClient.head()
                     .uri(url)
                     .retrieve()
                     .toBodilessEntity();
+            log.info("Camara: " + url);
+            log.info("Respuesta: " + response.getStatusCode().value());
             return response.getStatusCode().value();
         } catch (Exception e) {
             return 500;
