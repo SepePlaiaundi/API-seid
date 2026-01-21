@@ -5,6 +5,7 @@ import com.plaiaundi.sepe.seid.dominio.dao.UserRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Bookmark;
 import com.plaiaundi.sepe.seid.dominio.model.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class BookmarkService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public void addBookmark(String email, String cameraId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow();
@@ -27,6 +29,7 @@ public class BookmarkService {
         bookmarkRepository.save(new Bookmark(user, cameraId));
     }
 
+    @Transactional
     public void removeBookmark(String email, String cameraId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow();
@@ -34,6 +37,7 @@ public class BookmarkService {
         bookmarkRepository.deleteByUserAndCameraId(user, cameraId);
     }
 
+    @Transactional(readOnly = true)
     public List<Bookmark> getBookmarks(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow();

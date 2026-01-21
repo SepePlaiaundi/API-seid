@@ -5,7 +5,6 @@ import com.plaiaundi.sepe.seid.dto.AddBookmarkRequest;
 import com.plaiaundi.sepe.seid.dto.BookmarkResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +20,7 @@ public class BookmarkController {
         this.service = service;
     }
 
-    @PostMapping("/add")
+    @PostMapping
     public ResponseEntity<Void> add(
             @AuthenticationPrincipal UserDetails principal,
             @RequestBody AddBookmarkRequest request
@@ -40,11 +39,14 @@ public class BookmarkController {
     }
 
     @GetMapping
-    public List<BookmarkResponse> list(
+    public ResponseEntity<List<BookmarkResponse>> list(
             @AuthenticationPrincipal UserDetails principal
     ) {
-        return service.getBookmarks(principal.getUsername()).stream()
-                .map(b -> new BookmarkResponse(b.getCameraId()))
-                .toList();
+        List<BookmarkResponse> response =
+                service.getBookmarks(principal.getUsername()).stream()
+                        .map(b -> new BookmarkResponse(b.getCameraId()))
+                        .toList();
+
+        return ResponseEntity.ok(response);
     }
 }
