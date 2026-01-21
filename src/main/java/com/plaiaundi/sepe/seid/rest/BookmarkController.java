@@ -20,7 +20,7 @@ public class BookmarkController {
         this.service = service;
     }
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<Void> add(
             @AuthenticationPrincipal UserDetails principal,
             @RequestBody AddBookmarkRequest request
