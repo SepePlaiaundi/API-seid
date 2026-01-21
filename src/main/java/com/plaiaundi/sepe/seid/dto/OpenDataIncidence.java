@@ -1,24 +1,29 @@
 package com.plaiaundi.sepe.seid.dto;
 
-import jakarta.persistence.Id;
+import java.time.LocalDateTime;
 
-public record OpenDataIncidence (
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
+
+public record OpenDataIncidence(
         @Id
-        String incidenceId,
-        String sourceId,
+        @NotBlank
+        int incidenceId,
+        @NotBlank
+        int sourceId,
         String autonomousRegion,
         String province,
         String carRegistration,
         String cause,
         String cityTown,
-        String startDate,
-        String endDate,
+        LocalDateTime startDate,
+        LocalDateTime endDate,
         String road,
-        String pkStart,
-        String pkEnd,
+        double pkStart,
+        double pkEnd,
         String direction,
-        String latitude,
-        String longitude,
+        double latitude,
+        double longitude,
         String incidenceDescription,
         String incidenceLevel,
         String incidenceType

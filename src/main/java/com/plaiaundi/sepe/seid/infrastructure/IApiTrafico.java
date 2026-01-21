@@ -7,6 +7,7 @@ import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataIncidence;
 import com.plaiaundi.sepe.seid.dto.OpenDataIncidenceResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataSource;
+import com.plaiaundi.sepe.seid.dto.OpenDataSourceResponse;
 
 public interface IApiTrafico {
     
@@ -43,7 +44,7 @@ public interface IApiTrafico {
     OpenDataIncidence buscarIncidenciaPorIdYRecurso(int id, int idRecurso);
 
     // Recursos
-    List<OpenDataSource> listaRecursos(); // NumPagina = 1
-    List<OpenDataSource> listaRecursos(int numPagina);
+    OpenDataSourceResponse listaRecursos(); // NumPagina = 1
+    OpenDataSourceResponse listaRecursos(int numPagina);
 
 }

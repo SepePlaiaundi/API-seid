@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class Recurso {
 
     @Id
-    private String id;
+    private int id;
     private String descEs;
     private String descEu;
 

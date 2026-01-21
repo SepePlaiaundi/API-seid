@@ -7,12 +7,14 @@ import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataIncidence;
 import com.plaiaundi.sepe.seid.dto.OpenDataIncidenceResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataSource;
+import com.plaiaundi.sepe.seid.dto.OpenDataSourceResponse;
 import com.plaiaundi.sepe.seid.dto.errors.OpenDataErrorModel;
 import com.plaiaundi.sepe.seid.dto.errors.OpenDataValidationErrorModel;
 
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -84,6 +86,7 @@ public class ApiTrafico implements IApiTrafico {
                 .queryParam("_page", numPagina)
                 .build()
             )
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
@@ -103,6 +106,7 @@ public class ApiTrafico implements IApiTrafico {
                 .queryParam("_page", numPagina)
                 .build(latitud, longitud, radioEnKm)
             )
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
@@ -121,6 +125,7 @@ public class ApiTrafico implements IApiTrafico {
                 .queryParam("_page", numPagina)
                 .build(idRecurso)
             )
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
@@ -141,6 +146,7 @@ public class ApiTrafico implements IApiTrafico {
                 .queryParam("_page", numPagina)
                 .build(idRecurso, latitud, longitud, radioEnKm)
             )
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
@@ -154,6 +160,7 @@ public class ApiTrafico implements IApiTrafico {
                 .path("/v1.0/cameras/{id}/{idRecurso}")
                 .build(id, idRecurso)
             )
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
@@ -172,6 +179,7 @@ public class ApiTrafico implements IApiTrafico {
                 .queryParam("_page", numPagina)
                 .build()
             )
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
@@ -190,131 +198,204 @@ public class ApiTrafico implements IApiTrafico {
                 .queryParam("_page", numPagina)
                 .build(ano, mes, dia)
             )
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
             .body(OpenDataIncidenceResponse.class);
     }
 
-    // TODO: seguir por aqui
-
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorFechaYPorLocalizacion(int ano, int mes, int dia, double latitud,
             double longitud, int radioEnKm) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorFechaYPorLocalizacion'");
+        return listaIncidenciasPorFechaYPorLocalizacion(ano, mes, dia, latitud, longitud, radioEnKm, 1);
     }
-
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorFechaYPorLocalizacion(int ano, int mes, int dia, double latitud,
             double longitud, int radioEnKm, int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorFechaYPorLocalizacion'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/byDate/{year}/{month}/{day}/byLocation/{lat}/{lon}/{km}")
+                .queryParam("_page", numPagina)
+                .build(ano, mes, dia, latitud, longitud, radioEnKm)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidenceResponse.class);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorMes(int ano, int mes) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorMes'");
+        return listaIncidenciasPorMes(ano, mes, 1);
     }
-
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorMes(int ano, int mes, int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorMes'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/byMonth/{year}/{month}")
+                .queryParam("_page", numPagina)
+                .build(ano, mes)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidenceResponse.class);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorMesYPorLocalizacion(int ano, int mes, double latitud,
             double longitud, int radioEnKm) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorMesYPorLocalizacion'");
+        return listaIncidenciasPorMesYPorLocalizacion(ano, mes, latitud, longitud, radioEnKm, 1);
     }
-
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorMesYPorLocalizacion(int ano, int mes, double latitud,
             double longitud, int radioEnKm, int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorMesYPorLocalizacion'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/byMonth/{year}/{month}/byLocation/{lat}/{lon}/{km}")
+                .queryParam("_page", numPagina)
+                .build(ano, mes, latitud, longitud, radioEnKm)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidenceResponse.class);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorRecurso(int idRecurso) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorRecurso'");
+        return listaIncidenciasPorRecurso(idRecurso, 1);
     }
-
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorRecurso(int idRecurso, int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorRecurso'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/bySource/{idSource}")
+                .queryParam("_page", numPagina)
+                .build(idRecurso)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidenceResponse.class);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorRecursoYPorLocalizacion(int idRecurso, double latitud,
             double longitud, int radioEnKm) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorRecursoYPorLocalizacion'");
+        return listaIncidenciasPorRecursoYPorLocalizacion(idRecurso, latitud, longitud, radioEnKm, 1);
     }
-
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorRecursoYPorLocalizacion(int idRecurso, double latitud,
             double longitud, int radioEnKm, int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorRecursoYPorLocalizacion'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/bySource/{idSource}/byLocation/{lat}/{lon}/{km}")
+                .queryParam("_page", numPagina)
+                .build(idRecurso, latitud, longitud, radioEnKm)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidenceResponse.class);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorAno(int ano) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorAno'");
+        return listaIncidenciasPorAno(ano, 1);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorAno(int ano, int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorAno'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/bYear/{year}")
+                .queryParam("_page", numPagina)
+                .build(ano)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidenceResponse.class);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorAnoYPorLocalizacion(int ano, double latitud, double longitud,
             int radioEnKm) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorAnoYPorLocalizacion'");
+        return listaIncidenciasPorAnoYPorLocalizacion(ano, latitud, longitud, radioEnKm, 1);
     }
 
     @Override
     public OpenDataIncidenceResponse listaIncidenciasPorAnoYPorLocalizacion(int ano, double latitud, double longitud,
             int radioEnKm, int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaIncidenciasPorAnoYPorLocalizacion'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/byYear/{year}/byLocation/{lat}/{lon}/{km}")
+                .queryParam("_page", numPagina)
+                .build(ano, latitud, longitud, radioEnKm)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidenceResponse.class);
     }
 
     @Override
     public OpenDataIncidence buscarIncidenciaPorIdYRecurso(int id, int idRecurso) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'buscarIncidenciaPorIdYRecurso'");
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/incidences/{id}/{idSource}")
+                .build(id, idRecurso)
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataIncidence.class);
     }
 
     @Override
-    public List<OpenDataSource> listaRecursos() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaRecursos'");
+    public OpenDataSourceResponse listaRecursos() {
+        return listaRecursos(1);
     }
-
     @Override
-    public List<OpenDataSource> listaRecursos(int numPagina) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listaRecursos'");
+    public OpenDataSourceResponse listaRecursos(int numPagina) {
+        return restClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/v1.0/sources")
+                .queryParam("_page", numPagina)
+                .build()
+            )
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
+            .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
+            .body(OpenDataSourceResponse.class);
     }
 
     private void manejarError4xx(HttpRequest request, ClientHttpResponse response) throws IOException {
-        var error = objectMapper.readValue(response.getBody(), OpenDataValidationErrorModel.class);
+        var error = objectMapper
+                        .readValue(
+                            response.getBody(), 
+                            OpenDataValidationErrorModel.class
+                        );
         throw new OpenDataException("Error cliente", error);
     }
 
     private void manejarError5xx(HttpRequest request, ClientHttpResponse response) throws IOException {
-        var error = objectMapper.readValue(response.getBody(), OpenDataErrorModel.class);
+        var error = objectMapper
+                        .readValue(
+                            response.getBody(), 
+                            OpenDataErrorModel.class
+                        );
         throw new OpenDataException("Error servidor", error);
     }
 

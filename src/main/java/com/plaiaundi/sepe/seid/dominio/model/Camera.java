@@ -27,19 +27,18 @@ public class Camera {
     }
 
     @Id
-    private String id;
+    private int id;
     private String direccion;
     private String nombre;
-    private String kilometro;
-    private String latitud;
-    private String longitud;
+    private int kilometro;
+    private double latitud;
+    private double longitud;
     private String carretera;
-    //private Recurso recurso; // TODO: crear modelo recuros
+    private Recurso recurso;
     private URL urlImage;
     private LocalDateTime primeraInsercion = LocalDateTime.now();
     private LocalDateTime ultimaActualizacion;
     private boolean modificar = false;
-
     @Enumerated(EnumType.STRING)
     private Estado estado = Estado.ACTIVA; // Activo o Eliminado
 
