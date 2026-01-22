@@ -1,7 +1,10 @@
 package com.plaiaundi.sepe.seid.dto;
 
+import jakarta.persistence.Id;
+
 public record OpenDataSource(
-    String id,
+    @Id
+    int id,
     String descripcionEs,
     String descripcionEu
 ) {}

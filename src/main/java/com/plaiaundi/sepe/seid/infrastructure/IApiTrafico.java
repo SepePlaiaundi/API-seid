@@ -2,12 +2,7 @@ package com.plaiaundi.sepe.seid.infrastructure;
 
 import java.util.List;
 
-import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
-import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
-import com.plaiaundi.sepe.seid.dto.OpenDataIncidence;
-import com.plaiaundi.sepe.seid.dto.OpenDataIncidenceResponse;
-import com.plaiaundi.sepe.seid.dto.OpenDataSource;
-import com.plaiaundi.sepe.seid.dto.OpenDataSourceResponse;
+import com.plaiaundi.sepe.seid.dto.*;
 
 public interface IApiTrafico {
     
@@ -44,7 +39,7 @@ public interface IApiTrafico {
     OpenDataIncidence buscarIncidenciaPorIdYRecurso(int id, int idRecurso);
 
     // Recursos
-    OpenDataSourceResponse listaRecursos(); // NumPagina = 1
-    OpenDataSourceResponse listaRecursos(int numPagina);
+    List<OpenDataSource> listaRecursos(); // NumPagina = 1
+    List<OpenDataSource> listaRecursos(int numPagina);
 
 }

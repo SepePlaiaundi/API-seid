@@ -1,16 +1,22 @@
 package com.plaiaundi.sepe.seid.infrastructure.mappers;
 
+import com.plaiaundi.sepe.seid.dominio.util.CameraValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
 import com.plaiaundi.sepe.seid.infrastructure.ApiTrafico;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+
 @Component
 public class CameraMapper {
 
     @Autowired ApiTrafico apiTrafico;
-    @Autowired RecursoMapper recursoMapper; // TODO: hacer mapper
+    @Autowired RecursoMapper recursoMapper;
+    @Autowired CameraValidator cameraValidator;
     
     public OpenDataCamera toDto(Camera entity) {
         if (entity == null) {
@@ -26,11 +32,11 @@ public class CameraMapper {
             entity.getLongitud(),
             entity.getCarretera(),
             entity.getRecurso().getId(),
-            entity.getUrlImage()
+            entity.getUrlImage().toString()
         );
     }
     
-    public Camera toEntity(OpenDataCamera dto) {
+    public Camera toEntity(OpenDataCamera dto) throws MalformedURLException {
         if (dto == null) {
             return null;
         }
@@ -43,15 +49,21 @@ public class CameraMapper {
         entity.setLatitud(      dto.latitude());
         entity.setLongitud(     dto.longitude());
         entity.setCarretera(    dto.road());
-        entity.setRecurso(      recursoMapper
-            .toEntity(
-                apiTrafico
-                    .listaRecursos()
-                    .recursos()
-                    .get(dto.sourceId())
+        entity.setRecurso(
+            recursoMapper
+                .toEntity(
+                    apiTrafico
+                        .listaRecursos()
+                        .get(dto.sourceId())
                 )
-            );
-        entity.setUrlImage(     dto.urlImage());
+        );
+        entity.setUrlImage(
+            URI
+                .create(
+                    cameraValidator.limpiarYTransformarUrl(dto.urlImage())
+                )
+                .toURL()
+        );
         
         return entity;
     }

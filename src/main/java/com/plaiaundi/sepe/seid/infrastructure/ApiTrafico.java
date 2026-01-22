@@ -2,15 +2,13 @@ package com.plaiaundi.sepe.seid.infrastructure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plaiaundi.sepe.seid.dominio.model.OpenDataException;
-import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
-import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
-import com.plaiaundi.sepe.seid.dto.OpenDataIncidence;
-import com.plaiaundi.sepe.seid.dto.OpenDataIncidenceResponse;
-import com.plaiaundi.sepe.seid.dto.OpenDataSource;
-import com.plaiaundi.sepe.seid.dto.OpenDataSourceResponse;
+import com.plaiaundi.sepe.seid.dto.*;
 import com.plaiaundi.sepe.seid.dto.errors.OpenDataErrorModel;
 import com.plaiaundi.sepe.seid.dto.errors.OpenDataValidationErrorModel;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
@@ -19,62 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 
 @Service
 public class ApiTrafico implements IApiTrafico {
 
-    private final RestClient restClient;
-    private final ObjectMapper objectMapper;
-
-    public ApiTrafico(RestClient restClient, ObjectMapper objectMapper) {
-        this.restClient = restClient;
-        this.objectMapper = objectMapper;
-    }
-
-    public List<OpenDataCamera> getAllCameras() {
-        List<OpenDataCamera> result = new ArrayList<>();
-
-        for(int i = totalPaginasCamaras() ; i > 0 ; i--) {
-            result.addAll(llamarApiCameras(i).cameras());
-        }
-
-        return filtrarCamaras(result);
-    }
-
-    private List<OpenDataCamera> filtrarCamaras(List<OpenDataCamera> lista) {
-        lista.removeIf(camara -> camara.urlImage() == null);
-        lista.removeIf(camara -> camara.latitude() == null);
-        lista.removeIf(camara -> camara.longitude() == null);
-        return lista;
-    }
-
-    private int totalPaginasCamaras() {
-        return llamarApiCameras(1).totalPages();
-    }
-
-    public OpenDataCameraResponse llamarApiCameras(int numPagina) {
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1.0/cameras")
-                        .queryParam("_page", numPagina)
-                        .build()
-                )
-                .retrieve()
-                .body(OpenDataCameraResponse.class);
-    }
-
-    public OpenDataCamera llamarApiCamerasById(int id, int idSource) {
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1.0/cameras/"+id+"/"+idSource)
-                        .build()
-                )
-                .retrieve()
-                .body(OpenDataCamera.class);
-    }
+    @Autowired @Qualifier("ClienteApiTrafico") private RestClient restClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public OpenDataCameraResponse listaCamaras() { return listaCamaras(1); }
@@ -363,11 +313,11 @@ public class ApiTrafico implements IApiTrafico {
     }
 
     @Override
-    public OpenDataSourceResponse listaRecursos() {
+    public List<OpenDataSource> listaRecursos() {
         return listaRecursos(1);
     }
     @Override
-    public OpenDataSourceResponse listaRecursos(int numPagina) {
+    public List<OpenDataSource> listaRecursos(int numPagina) {
         return restClient.get()
             .uri(uriBuilder -> uriBuilder
                 .path("/v1.0/sources")
@@ -378,7 +328,7 @@ public class ApiTrafico implements IApiTrafico {
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError, this::manejarError4xx)
             .onStatus(HttpStatusCode::is5xxServerError, this::manejarError5xx)
-            .body(OpenDataSourceResponse.class);
+            .body(new ParameterizedTypeReference<List<OpenDataSource>>() {});
     }
 
     private void manejarError4xx(HttpRequest request, ClientHttpResponse response) throws IOException {

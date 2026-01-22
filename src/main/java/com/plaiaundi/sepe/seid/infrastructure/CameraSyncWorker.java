@@ -1,5 +1,6 @@
 package com.plaiaundi.sepe.seid.infrastructure;
 
+import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
 import com.plaiaundi.sepe.seid.dominio.services.CameraService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,32 +15,27 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j // Si usas Lombok para logs, si no usa System.out
 public class CameraSyncWorker {
 
-    @Autowired private ApiTrafico apiTrafico; // Tu cliente que baja el JSON gigante
-    @Autowired
-    private CameraService cameraService;
+    @Autowired private CameraService cameraService;
+    @Autowired private CameraRepository cameraRepository;
 
-    // Se ejecuta cada 10 minutos
-    // initialDelay = 5000 espera 5 segs al arrancar la app antes de la primera carga
-    @Scheduled(fixedRate = 600000, initialDelay = 5000)
+    // Ejecutar cada hora (3600000 ms), espera inicial 5s
+    @Scheduled(fixedRate = 3600000, initialDelay = 5000)
     public void sincronizarCamaras() {
-        log.info("--- INICIO SINCRONIZACIÓN AUTOMÁTICA ---");
+        log.info("--- 🔄 INICIO WORKER: Sincronización de Cámaras ---");
         long inicio = System.currentTimeMillis();
 
-        // 1. Obtenemos la lista "sucia" de la API externa
-        var listaCruda = apiTrafico.getAllCameras();
+        try {
 
-        // 2. Disparamos los hilos (El servicio ya guarda en BD internamente)
-        List<CompletableFuture<Camera>> futuros = listaCruda.stream()
-                .map(dto -> cameraService.parseFromOpenDataCamera(dto))
-                .toList();
+            List<Camera> camarasProcesadas = cameraService.syncAllCamerasFromAPI();
+            cameraRepository.saveAll(camarasProcesadas);
 
+            log.info("✅ Sincronización finalizada. Cámaras procesadas: {}", camarasProcesadas.size());
 
-        // 3. Esperamos a que el worker termine todo el trabajo
-        // Aunque es background, usamos join() para que el método 'sincronizarCamaras'
-        // no termine hasta que todas las cámaras estén procesadas.
-        CompletableFuture.allOf(futuros.toArray(new CompletableFuture[0])).join();
+        } catch (Exception e) {
+            log.error("❌ Error crítico en el worker de cámaras", e);
+        }
 
         long fin = System.currentTimeMillis();
-        log.info("--- FIN SINCRONIZACIÓN. Tiempo: {} ms ---", (fin - inicio));
+        log.info("--- ⏱️ Tiempo total ejecución: {} ms ---", (fin - inicio));
     }
 }

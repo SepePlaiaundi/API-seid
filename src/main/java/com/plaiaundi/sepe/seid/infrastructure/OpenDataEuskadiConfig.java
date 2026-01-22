@@ -19,7 +19,7 @@ import java.time.Duration;
 @Configuration
 public class OpenDataEuskadiConfig {
 
-    @Bean
+    @Bean("ClienteApiTrafico")
     public RestClient restClient() throws NoSuchAlgorithmException, KeyManagementException {
         // 1. Crear un TrustManager que NO verifique nada (acepta todo)
         TrustManager[] trustAllCerts = new TrustManager[]{

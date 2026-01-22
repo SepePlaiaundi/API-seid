@@ -19,21 +19,20 @@ import lombok.NoArgsConstructor;
 public class Incidence {
 
     @Id
-    private String id;
+    private int id;
     @ManyToOne
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "recurso_id")
     private Recurso recurso;
     private String provincia;
     private String causa;
     private LocalDateTime fecIni;
     private String carretera;
     private String direccion;
-    private String latitud;
-    private String longitud;
+    private double latitud;
+    private double longitud;
     private String ciudad;
     private LocalDateTime fecFin;
     private String nivel;
-    private String nombre;
     private String tipo;
     private String descripcion;
 

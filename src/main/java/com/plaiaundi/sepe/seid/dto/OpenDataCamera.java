@@ -10,11 +10,11 @@ public record OpenDataCamera (
     @NotEmpty
     int cameraId, // obligatorio
     String cameraName,
-    int kilometer,
+    String kilometer,
     double latitude,
     double longitude,
     String road,
     @NotEmpty
     int sourceId, // obligatorio
-    URL urlImage
+    String urlImage
 ) {}
