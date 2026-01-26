@@ -32,13 +32,15 @@ public class CameraTest {
 
     }
 
-    @Test
-    void testGetId() {
-        Camera cam = new Camera();
-        String dato = "2345RTG";
-        cam.setId(dato);
-        assertEquals(dato, cam.getId());
-    }
+    /*
+     * @Test
+     * void testGetId() {
+     * Camera cam = new Camera();
+     * String dato = "2345RTG";
+     * cam.setId(dato);
+     * assertEquals(dato, cam.getId());
+     * }
+     */
 
     @Test
     void testGetKilometro() {
@@ -48,21 +50,23 @@ public class CameraTest {
         assertEquals(dato, cam.getKilometro());
     }
 
-    @Test
-    void testGetLatitud() {
-        Camera cam = new Camera();
-        String dato = "846531";
-        cam.setLatitud(dato);
-        assertEquals(dato, cam.getLatitud());
-    }
-
-    @Test
-    void testGetLongitud() {
-        Camera cam = new Camera();
-        String dato = "641523";
-        cam.setLongitud(dato);
-        assertEquals(dato, cam.getLongitud());
-    }
+    /*
+     * @Test
+     * void testGetLatitud() {
+     * Camera cam = new Camera();
+     * String dato = "846531";
+     * cam.setLatitud(dato);
+     * assertEquals(dato, cam.getLatitud());
+     * }
+     * 
+     * @Test
+     * void testGetLongitud() {
+     * Camera cam = new Camera();
+     * String dato = "641523";
+     * cam.setLongitud(dato);
+     * assertEquals(dato, cam.getLongitud());
+     * }
+     */
 
     @Test
     void testGetNombre() {

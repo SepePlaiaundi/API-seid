@@ -23,6 +23,9 @@ public class Camera implements Persistable<Integer> {
     }
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_model")
+    private Integer idModel;
     private Integer id;
     private String direccion;
     private String nombre;
@@ -30,7 +33,7 @@ public class Camera implements Persistable<Integer> {
     private double latitud;
     private double longitud;
     private String carretera;
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "recurso_id")
     private Recurso recurso;
     private URL urlImage;
