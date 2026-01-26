@@ -43,11 +43,10 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
-            @RequestBody UserLoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@RequestBody UserLoginRequest request) {
 
         try {
-            authenticationManager.authenticate(
+            Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.email(),
                             request.password()
@@ -56,7 +55,10 @@ public class UserController {
 
             String token = jwtService.generateToken(request.email());
 
-            return ResponseEntity.ok(new LoginResponse(token));
+            User user = userRepository.findByEmail(request.email())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            return ResponseEntity.ok(new LoginResponse(token, user.getRol()));
 
         } catch (AuthenticationException e) {
             return ResponseEntity.status(401).build();
