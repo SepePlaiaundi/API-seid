@@ -99,7 +99,6 @@ public class CameraService {
         Map<Integer, Recurso> mapaDeRecursosFinal = new HashMap<>(recursosExistentes);
         for (Integer idNecesario : idsRecursosNecesarios) {
             if (!mapaDeRecursosFinal.containsKey(idNecesario)) {
-                // Ahora la búsqueda en recursosDtoMap es por clave, no por índice.
                 OpenDataSource dto = recursosDtoMap.get(idNecesario);
                 if (dto != null) {
                     Recurso nuevoRecurso = recursoMapper.toEntity(dto);
@@ -114,16 +113,19 @@ public class CameraService {
         log.info("⚡ INICIO FASE 3: Validando y Mapeando en paralelo...");
         List<CompletableFuture<Camera>> camarasValidadasFutures = todosLosDtos.stream()
                 .map(dto -> CompletableFuture.supplyAsync(() -> {
+                    log.info("⬇️ Revisando imagen camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
                     if (cameraValidator.isValid(dto)) {
+                        log.info("✅ Imagen valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
                         try {
                             Recurso recurso = mapaDeRecursosFinal.get(dto.sourceId());
                             if (recurso != null) {
                                 return cameraMapper.toEntity(dto, recurso);
                             }
                         } catch (Exception e) {
-                            log.error("❌ [Hilo: {}] Error mapeando cámara {}: {}", Thread.currentThread().getName(), dto.cameraId(), e.getMessage());
+                            log.error("❌ Error mapeando cámara {}: {}", dto.cameraId(), e.getMessage());
                         }
                     }
+                    log.info("❌ Imagen no valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
                     return null;
                 }, executor))
                 .toList();

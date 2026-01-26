@@ -9,6 +9,12 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+
 
 
 @Slf4j
@@ -24,6 +30,18 @@ public class CameraController {
         log.info("GET /camara");
         return cameraService.getCameras();
     }
+
+    @GetMapping(value = "/tunel", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Camera> getMethodName() {
+        return cameraService.syncAllCamerasFromAPI();
+    }
+    
+    @PostMapping("sync")
+    public boolean postMethodName() {
+        cameraService.syncAllCamerasFromAPI();
+        return true;
+    }
+    
 
     /*
     @GetMapping(value="/byPosition/{longitud}/{latitud}/{radioEnKm}", produces = MediaType.APPLICATION_JSON_VALUE)

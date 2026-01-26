@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Persistable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,6 +27,7 @@ public class Camera implements Persistable<Integer> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_model")
+    @JsonIgnore
     private Integer idModel;
     private Integer id;
     private String direccion;
@@ -39,11 +42,13 @@ public class Camera implements Persistable<Integer> {
     private URL urlImage;
     private LocalDateTime primeraInsercion = LocalDateTime.now();
     private LocalDateTime ultimaActualizacion;
+    @JsonIgnore
     private boolean modificar = false;
+    @JsonIgnore
     @Enumerated(EnumType.STRING)
     private Estado estado = Estado.ACTIVA; // Activo o Eliminado
-
     @Transient // Este campo no se guarda en BD, es solo para lógica
+    @JsonIgnore
     private boolean isNew = true;
 
     @Override
