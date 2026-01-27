@@ -3,93 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Cámaras - Conversión UTM</title>
+    <title>Mapa de Cámaras - Bizkaia</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         #map { height: 100vh; width: 100%; }
         #status {
             position: absolute; top: 10px; right: 10px; z-index: 1000;
-            background: white; padding: 10px; border-radius: 5px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            background: white; padding: 12px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            max-width: 250px;
         }
+        .popup-img { width: 100%; border-radius: 4px; margin-top: 8px; display: block; }
     </style>
 </head>
 <body>
 
-    <div id="status">Cargando y convirtiendo coordenadas...</div>
+    <div id="status">Cargando cámaras de Bizkaia...</div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 
     <script>
-        // --- CONFIGURACIÓN DE CONVERSIÓN ---
-        // Definimos la proyección del País Vasco (ETRS89 / UTM zone 30N)
-        // Si tus chinchetas salen desplazadas unos 100m, cambia 'EPSG:25830' por 'EPSG:23030' (ED50)
-        proj4.defs("EPSG:25830","+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs");
-        
-        const origenUTM = "EPSG:25830";
-        const destinoGPS = "EPSG:4326"; // (Lat/Lon WGS84)
+        // 1. Inicializar el mapa centrado en el área de Bilbao/Bizkaia
+        const map = L.map('map').setView([43.30, -2.96], 12);
 
-        // Inicializar mapa
-        const map = L.map('map').setView([43.1, -2.6], 9);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // 2. Capa de mapa (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
         async function cargarDatos() {
             const status = document.getElementById('status');
             try {
+                // Cambia esta URL por la de tu API real
                 const res = await fetch('http://localhost:8080/camara');
-                if(!res.ok) throw new Error("Error conexión");
+                if(!res.ok) throw new Error("No se pudo conectar con el servidor");
+                
                 const datos = await res.json();
                 const lista = Array.isArray(datos) ? datos : [datos];
                 
                 let cont = 0;
 
                 lista.forEach(cam => {
-                    // ASUMIMOS:
-                    // cam.longitud contiene la coordenada X (ej: 500000)
-                    // cam.latitud contiene la coordenada Y (ej: 4700000)
-                    const utmX = parseFloat(cam.longitud); 
-                    const utmY = parseFloat(cam.latitud);
-
-                    // Filtro: Si son 0, ignoramos
-                    if (utmX > 0 && utmY > 0) {
+                    // Validamos que existan coordenadas válidas
+                    if (cam.latitud && cam.longitud) {
                         
-                        try {
-                            // --- LA MAGIA: CONVERTIR UTM A LAT/LON ---
-                            // proj4 devuelve [longitud, latitud]
-                            const coordenadasGPS = proj4(origenUTM, destinoGPS, [utmX, utmY]);
-                            
-                            // Leaflet necesita [latitud, longitud] (al revés que proj4)
-                            const lat = coordenadasGPS[1];
-                            const lng = coordenadasGPS[0];
+                        // En Leaflet el orden es [Latitud, Longitud]
+                        const marker = L.marker([cam.latitud, cam.longitud]).addTo(map);
 
-                            L.marker([lat, lng])
-                                .addTo(map)
-                                .bindPopup(`
-                                    <b>${cam.nombre}</b><br>
-                                    UTM X: ${utmX}<br>UTM Y: ${utmY}<br>
-                                    <img src="${cam.urlImage}" style="width:100%; margin-top:5px">
-                                `);
-                            cont++;
-                        } catch (e) {
-                            console.error("Error convirtiendo coordenada:", e);
-                        }
+                        // Contenido del bocadillo (Popup)
+                        marker.bindPopup(`
+                            <div style="min-width: 200px">
+                                <b style="color: #2c3e50;">${cam.nombre}</b><br>
+                                <small>${cam.carretera} - PK: ${cam.kilometro}</small><br>
+                                <p style="margin: 5px 0; font-size: 0.9em;">Dirección: ${cam.direccion}</p>
+                                <img src="${cam.urlImage}" alt="Cámara" class="popup-img" onerror="this.src='https://via.placeholder.com/200x150?text=Imagen+no+disponible'">
+                                <div style="margin-top: 5px; font-size: 0.8em; color: #666;">
+                                    Recurso: ${cam.recurso.descEs}
+                                </div>
+                            </div>
+                        `);
+                        cont++;
                     }
                 });
                 
-                status.innerText = `Cargadas ${cont} cámaras (Convertidas de UTM a GPS)`;
+                status.innerHTML = `<b>${cont}</b> cámaras cargadas correctamente.`;
 
             } catch (err) {
                 console.error(err);
+                status.style.color = "red";
                 status.innerText = "Error: " + err.message;
             }
         }
 
+        // Ejecutar la carga al iniciar
         cargarDatos();
     </script>
 </body>
