@@ -65,14 +65,14 @@ public class CameraValidator {
     }
 
     private String parsearDominioGuipuzcoa(String url) {
-        log.info("Parseando dominio: {}", url);
+        log.debug("Parseando dominio: {}", url);
         if (url.contains("trafikoa")) {
             url = url.replaceAll(
                     "https?://www\\.trafikoa\\.(eus|net)",
                     "https://apps.trafikoa.euskadi.eus"
             );
         }
-        log.info("Parseado a: {}", url);
+        log.debug("Parseado a: {}", url);
         return url;
     }
 
@@ -85,17 +85,21 @@ public class CameraValidator {
                 status = checkStatusCode(uri, true);
 
                 // 2. Imprimimos la variable (ahora es seguro)
-                log.info("{} Código de estado: {}", uri, status);
+                log.debug("{} Código de estado: {}", uri, status);
             // INTENTO 1: HEAD (Rápido)
                 return checkStatusCode(uri, true);
             } catch (Exception e) {
                 status = checkStatusCode(uri, false);
                 // 2. Imprimimos la variable (ahora es seguro)
-                log.info("{} Código de estado: {}", uri, status);
+                log.debug("{} Código de estado: {}", uri, status);
                 return status;
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            int limiteDeMensaje = 65;
+            String mensajeError = e.getMessage();
+            int lengthMensajeError = mensajeError.length();
+            mensajeError = lengthMensajeError < limiteDeMensaje ? mensajeError.substring(0, lengthMensajeError) : (mensajeError.substring(0 , limiteDeMensaje) + "...");
+            log.debug("Error en la url: {}", mensajeError );
             return false;
         }
     }

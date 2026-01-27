@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
-import com.plaiaundi.sepe.seid.dominio.model.Camera.Estado;
+import com.plaiaundi.sepe.seid.dominio.model.Estado;
 
 import java.util.List;
 import java.util.Optional;

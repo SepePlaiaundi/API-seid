@@ -30,11 +30,13 @@ public class CameraController {
 
     @GetMapping(value = "/tunel", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Camera> getMethodName() {
+        log.info("GET /camara/tunel");
         return cameraService.syncAllCamerasFromAPI();
     }
     
     @PostMapping("sync")
     public boolean postMethodName() {
+        log.info("POST /camara/sync");
         cameraService.syncAllCamerasFromAPI();
         return true;
     }

@@ -41,21 +41,14 @@ public class IncidenceMapper {
         );
     }
     
-    public Incidence toEntity(OpenDataIncidence dto) {
+    public Incidence toEntity(OpenDataIncidence dto, Recurso recurso) {
         if (dto == null) {
             return null;
         }
 
         Incidence entity = new Incidence();
         entity.setId(           dto.incidenceId());
-        entity.setRecurso(
-            recursoMapper
-                .toEntity(
-                    apiTrafico
-                        .listaRecursos()
-                        .get(dto.sourceId())
-                )
-        );
+        entity.setRecurso(      recurso);
         entity.setProvincia(    dto.province());
         entity.setCausa(        dto.cause());
         entity.setFecIni(       dto.startDate());

@@ -3,6 +3,7 @@ package com.plaiaundi.sepe.seid.dominio.services;
 import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
 import com.plaiaundi.sepe.seid.dominio.dao.RecursoRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
+import com.plaiaundi.sepe.seid.dominio.model.Estado;
 import com.plaiaundi.sepe.seid.dominio.model.Recurso;
 import com.plaiaundi.sepe.seid.dominio.util.CameraValidator;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
@@ -52,21 +53,21 @@ public class CameraService {
     private Executor executor;
 
     public List<Camera> getCameras() {
-        return cameraRepository.findAllByEstado(Camera.Estado.ACTIVA);
+        return cameraRepository.findAllByEstado(Estado.ACTIVA);
     }
 
     private List<OpenDataCamera> obtencionDeDatosCrudos() {
         // Descarga de pagina inicial para obtencion de metadata
-        log.info("📄 [Main Thread] Descargando página 1 (Síncrona)...");
+        log.debug("📄 [Main Thread] Descargando página 1 (Síncrona)...");
         OpenDataCameraResponse primeraPagina = apiTrafico.listaCamaras();
         int totalPaginas = primeraPagina.totalPages();
-        log.info("📚 Total páginas detectadas: {}", totalPaginas);
+        log.debug("📚 Total páginas detectadas: {}", totalPaginas);
 
         // Descarga paralela de paginas de opendata
         List<CompletableFuture<OpenDataCameraResponse>> futurasPaginas = IntStream
                 .rangeClosed(2, totalPaginas) // Abrimos un Stream de 2 al total de paginas
                 .mapToObj(pagina -> CompletableFuture.supplyAsync(() -> { // Mapeamos cada pagina como un objeto completable
-                    log.info("⬇️ [Hilo: {}] Solicitando página {}", Thread.currentThread().getName(), pagina);
+                    log.debug("⬇️ [Hilo: {}] Solicitando página {}", Thread.currentThread().getName(), pagina);
                     return apiTrafico.listaCamaras(pagina); // Obtenemos la pagina
                 }, executor)) // Bloque de hilos que usamos, declarado en AsyncConfig
                 .toList(); // Enlistamos
@@ -99,7 +100,7 @@ public class CameraService {
         Map<Integer, Recurso> recursosExistentes = recursoRepository.findAllById(idsRecursosNecesarios).stream() // Abre un flujo de datos con los idNecesarios que ya esten en bd
                 .collect(
                     Collectors.toMap(Recurso::getId, Function.identity())); // Genera una coleccion con los ids necesarios partiendo de los existentes
-        log.info("🔍 Encontrados {} recursos existentes en la BD.", recursosExistentes.size());
+        log.debug("🔍 Encontrados {} recursos existentes en la BD.", recursosExistentes.size());
 
         // Genera los recursos necesarios
         Map<Integer, Recurso> mapaDeRecursosFinal = new HashMap<>(recursosExistentes);
@@ -118,9 +119,9 @@ public class CameraService {
     private List<Camera> validarYmapear(List<OpenDataCamera> todosLosDtos, Map<Integer, Recurso> mapaDeRecursosFinal) {
         List<CompletableFuture<Camera>> camarasValidadasFutures = todosLosDtos.stream()
                 .map(dto -> CompletableFuture.supplyAsync(() -> {
-                    log.info("⬇️ Revisando imagen camara {} de recurso {} ", dto.cameraId(), dto.sourceId()); // Opcional reducir logs
+                    log.debug("⬇️ Revisando imagen camara {} de recurso {} ", dto.cameraId(), dto.sourceId()); // Opcional reducir logs
                     if (cameraValidator.isValid(dto)) {
-                        log.info("✅ Imagen valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
+                        log.debug("✅ Imagen valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
                         try {
                             Recurso recurso = mapaDeRecursosFinal.get(dto.sourceId());
                             if (recurso != null) {
@@ -136,7 +137,7 @@ public class CameraService {
                             log.error("❌ Error mapeando cámara {}: {}", dto.cameraId(), e.getMessage());
                         }
                     }
-                    log.info("❌ Imagen no valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
+                    log.debug("❌ Imagen no valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
                     return null;
                 }, executor))
                 .toList();
@@ -196,7 +197,7 @@ public class CameraService {
         // 5. Guardamos todo en lote. JPA sabe cuáles son updates y cuáles inserts
         if (!listaFinalParaGuardar.isEmpty()) {
             cameraRepository.saveAll(listaFinalParaGuardar);
-            log.info("✅ Persistencia finalizada: {} cámaras procesadas.", listaFinalParaGuardar.size());
+            log.debug("✅ Persistencia finalizada: {} cámaras procesadas.", listaFinalParaGuardar.size());
         }
     }
 

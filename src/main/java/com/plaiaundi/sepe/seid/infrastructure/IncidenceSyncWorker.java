@@ -1,8 +1,8 @@
 package com.plaiaundi.sepe.seid.infrastructure;
 
-import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
-import com.plaiaundi.sepe.seid.dominio.model.Camera;
-import com.plaiaundi.sepe.seid.dominio.services.CameraService;
+import com.plaiaundi.sepe.seid.dominio.model.Incidence;
+import com.plaiaundi.sepe.seid.dominio.services.IncidenceService;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,31 +10,30 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Component
 @Slf4j
-public class CameraSyncWorker {
+public class IncidenceSyncWorker {
 
-    @Autowired private CameraService cameraService;
+    @Autowired private IncidenceService incidenceService;
 
     // Evento del worker
-    // Ejecutar cada hora (3600000 ms), espera inicial 25s
+    // Ejecutar cada 10 min (600000 ms), espera inicial 25s
     @Scheduled(
-        fixedRate = 3600000, 
-        initialDelay = 250000
+        fixedRate = 600000, 
+        initialDelay = 5000
     )
     public void sincronizarCamaras(
     ) {
         // Inicio de evento
-        log.info("--- 🔄 INICIO WORKER: Sincronización de Cámaras ---");
+        log.info("--- 🔄 INICIO WORKER: Sincronización de Incidencias ---");
         long inicio = System.currentTimeMillis();
 
         try 
         {
             // Funcion principal de sincronizacion
-            List<Camera> camarasProcesadas = cameraService.syncAllCamerasFromAPI();
-            log.info("✅ Sincronización finalizada. Cámaras procesadas: {}", camarasProcesadas.size());
+            List<Incidence> incidenciasProcesadas = incidenceService.syncAllIncidencesFromAPI();
+            log.info("✅ Sincronización finalizada. Incidencias procesadas: {}", incidenciasProcesadas.size());
         }
 
         // Error de conexión a la api
@@ -51,7 +50,7 @@ public class CameraSyncWorker {
 
         // Cualquier otro error desconocido
         } catch (Exception e) {
-            log.error("❌ Error crítico en el worker de cámaras", e);
+            log.error("❌ Error crítico en el worker de incidencias", e);
         }
 
         // Fin de evento
