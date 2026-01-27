@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
 
 @Repository
-public interface IncidenceRepository extends JpaRepository<Incidence, String> {
+public interface IncidenceRepository extends JpaRepository<Incidence, Integer> {
 
     
 

@@ -9,10 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 
 
@@ -20,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Slf4j
 @RestController
 @RequestMapping("/camara")
+@CrossOrigin(origins = "*")
 public class CameraController {
 
     @Autowired

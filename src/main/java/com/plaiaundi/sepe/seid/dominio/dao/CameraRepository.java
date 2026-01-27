@@ -12,10 +12,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CameraRepository extends JpaRepository<Camera, String> {
+public interface CameraRepository extends JpaRepository<Camera, Integer> {
 
     Optional<Camera> findById(String id);
     List<Camera> findAllByEstado(Estado estado);
+    @Query("SELECT c FROM Camera c WHERE c.id IN :ids")
+    List<Camera> findCandidatasPorIdsExternos(@Param("ids") List<Integer> ids);
     @Query("SELECT c.id FROM Camera c WHERE c.id IN :ids")
     List<Integer> findExistingIds(@Param("ids") List<Integer> ids);
 }

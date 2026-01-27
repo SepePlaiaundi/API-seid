@@ -1,22 +1,24 @@
 package com.plaiaundi.sepe.seid.dominio.util;
 
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.apache.tomcat.websocket.ClientEndpointHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import java.net.URI;
 
 @Component
+@Slf4j
 public class CameraValidator {
 
-    private final RestClient restClient;
-
-    public CameraValidator() {
-        // Configuramos RestClient (puedes inyectar uno configurado globalmente si prefieres)
-        this.restClient = RestClient.builder()
-                .defaultHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)") // CRÍTICO para Guipúzcoa
-                .build();
-    }
+    @Autowired
+    @Qualifier("ClienteHTTPGenerico")
+    private RestClient restClient;
 
     /**
      * Método principal que orquesta todas las validaciones
@@ -63,12 +65,14 @@ public class CameraValidator {
     }
 
     private String parsearDominioGuipuzcoa(String url) {
-        if (url.contains("trafikoa.eus") || url.contains("trafikoa.net")) {
-            return url.replaceAll(
+        log.info("Parseando dominio: {}", url);
+        if (url.contains("trafikoa")) {
+            url = url.replaceAll(
                     "https?://www\\.trafikoa\\.(eus|net)",
                     "https://apps.trafikoa.euskadi.eus"
             );
         }
+        log.info("Parseado a: {}", url);
         return url;
     }
 
@@ -76,17 +80,22 @@ public class CameraValidator {
     private boolean isUrlReachable(String urlStr) {
         try {
             URI uri = URI.create(urlStr);
-
-            // INTENTO 1: HEAD (Rápido)
+            boolean status;
             try {
+                status = checkStatusCode(uri, true);
+
+                // 2. Imprimimos la variable (ahora es seguro)
+                log.info("{} Código de estado: {}", uri, status);
+            // INTENTO 1: HEAD (Rápido)
                 return checkStatusCode(uri, true);
             } catch (Exception e) {
-                // INTENTO 2: GET (Lento, pero seguro si el servidor bloquea HEAD)
-                // Si falla HEAD (405 Method Not Allowed o 403), intentamos GET
-                return checkStatusCode(uri, false);
+                status = checkStatusCode(uri, false);
+                // 2. Imprimimos la variable (ahora es seguro)
+                log.info("{} Código de estado: {}", uri, status);
+                return status;
             }
         } catch (Exception e) {
-            // Loguear solo en debug para no ensuciar logs
+            log.error(e.getMessage());
             return false;
         }
     }

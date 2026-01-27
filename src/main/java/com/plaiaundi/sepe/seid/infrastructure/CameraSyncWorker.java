@@ -13,26 +13,33 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Component
-@Slf4j // Si usas Lombok para logs, si no usa System.out
+@Slf4j
 public class CameraSyncWorker {
 
     @Autowired private CameraService cameraService;
-    @Autowired private CameraRepository cameraRepository;
 
+    // Evento del worker
     // Ejecutar cada hora (3600000 ms), espera inicial 5s
-    @Scheduled(fixedRate = 3600000, initialDelay = 5000)
-    public void sincronizarCamaras() {
+    @Scheduled(
+        fixedRate = 3600000, 
+        initialDelay = 5000
+    )
+    public void sincronizarCamaras(
+    ) {
+        // Inicio de evento
         log.info("--- 🔄 INICIO WORKER: Sincronización de Cámaras ---");
         long inicio = System.currentTimeMillis();
 
-        try {
-
+        try 
+        {
+            // Funcion principal de sincronizacion
             List<Camera> camarasProcesadas = cameraService.syncAllCamerasFromAPI();
-            //cameraRepository.saveAll(camarasProcesadas);
-
             log.info("✅ Sincronización finalizada. Cámaras procesadas: {}", camarasProcesadas.size());
+        }
 
-        } catch (ResourceAccessException e) {
+        // Error de conexión a la api
+        catch (ResourceAccessException e) 
+        {
             log.error("❌ Error de conexion a la api, reintentando en 1000ms");
             try {
                 Thread.sleep(1000);
@@ -42,10 +49,12 @@ public class CameraSyncWorker {
             log.info("✅ Reintentando conexion");
             sincronizarCamaras();
 
+        // Cualquier otro error desconocido
         } catch (Exception e) {
             log.error("❌ Error crítico en el worker de cámaras", e);
         }
 
+        // Fin de evento
         long fin = System.currentTimeMillis();
         log.info("--- ⏱️ Tiempo total ejecución: {} ms ---", (fin - inicio));
     }

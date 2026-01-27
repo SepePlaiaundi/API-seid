@@ -1,7 +1,5 @@
 package com.plaiaundi.sepe.seid.dto;
 
-import java.net.URL;
-
 import jakarta.validation.constraints.NotEmpty;
 
 public record OpenDataCamera (
