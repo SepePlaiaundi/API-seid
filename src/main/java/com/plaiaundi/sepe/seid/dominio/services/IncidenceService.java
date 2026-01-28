@@ -15,57 +15,61 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
 import com.plaiaundi.sepe.seid.dominio.dao.IncidenceRepository;
 import com.plaiaundi.sepe.seid.dominio.dao.RecursoRepository;
-import com.plaiaundi.sepe.seid.dominio.model.Camera;
 import com.plaiaundi.sepe.seid.dominio.model.Estado;
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
 import com.plaiaundi.sepe.seid.dominio.model.Recurso;
 import com.plaiaundi.sepe.seid.dominio.model.Response;
-import com.plaiaundi.sepe.seid.dominio.util.CameraValidator;
 import com.plaiaundi.sepe.seid.dominio.util.IncidenceValidator;
-import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
-import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataIncidence;
 import com.plaiaundi.sepe.seid.dto.OpenDataIncidenceResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataSource;
 import com.plaiaundi.sepe.seid.infrastructure.ApiTrafico;
 import com.plaiaundi.sepe.seid.infrastructure.CoordinateNormalizer;
-import com.plaiaundi.sepe.seid.infrastructure.mappers.CameraMapper;
 import com.plaiaundi.sepe.seid.infrastructure.mappers.IncidenceMapper;
 import com.plaiaundi.sepe.seid.infrastructure.mappers.RecursoMapper;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
-@Slf4j
 public class IncidenceService {
 
-    @Autowired
-    private ApiTrafico apiTrafico;
-    @Autowired
-    private IncidenceRepository incidenceRepository;
-    @Autowired
-    private RecursoRepository recursoRepository;
-    @Autowired
-    private IncidenceValidator incidenceValidator;
-    @Autowired
-    private IncidenceMapper incidenceMapper;
-    @Autowired
-    private RecursoMapper recursoMapper;
-    @Autowired
-    private CoordinateNormalizer coordinateNormalizer;
-    @Autowired
-    @Qualifier("hilosIncidencias")
-    private Executor executor;
+    private static final Logger log = LoggerFactory.getLogger(IncidenceService.class);
+
+    private final ApiTrafico apiTrafico;
+    private final IncidenceRepository incidenceRepository;
+    private final RecursoRepository recursoRepository;
+    private final IncidenceValidator incidenceValidator;
+    private final IncidenceMapper incidenceMapper;
+    private final RecursoMapper recursoMapper;
+    private final CoordinateNormalizer coordinateNormalizer;
+    private final Executor executor;
+
+    public IncidenceService(ApiTrafico apiTrafico,
+            IncidenceRepository incidenceRepository,
+            RecursoRepository recursoRepository,
+            IncidenceValidator incidenceValidator,
+            IncidenceMapper incidenceMapper,
+            RecursoMapper recursoMapper,
+            CoordinateNormalizer coordinateNormalizer,
+            @Qualifier("hilosIncidencias") Executor executor) {
+        this.apiTrafico = apiTrafico;
+        this.incidenceRepository = incidenceRepository;
+        this.recursoRepository = recursoRepository;
+        this.incidenceValidator = incidenceValidator;
+        this.incidenceMapper = incidenceMapper;
+        this.recursoMapper = recursoMapper;
+        this.coordinateNormalizer = coordinateNormalizer;
+        this.executor = executor;
+    }
 
     private static final int MAX_PAGINAS = 100;
 
@@ -77,7 +81,8 @@ public class IncidenceService {
         // Descarga de pagina inicial para obtencion de metadata
         log.debug("📄 [Main Thread] Descargando página 1 (Síncrona)...");
         LocalDateTime now = LocalDateTime.now();
-        OpenDataIncidenceResponse primeraPagina = apiTrafico.listaIncidenciasPorFecha(now.getYear(), now.getMonthValue(), now.getDayOfMonth());
+        OpenDataIncidenceResponse primeraPagina = apiTrafico.listaIncidenciasPorFecha(now.getYear(),
+                now.getMonthValue(), now.getDayOfMonth());
         int totalPaginas = primeraPagina.totalPages();
         totalPaginas = totalPaginas > MAX_PAGINAS ? MAX_PAGINAS : totalPaginas;
         log.debug("📚 Total páginas detectadas: {}", totalPaginas);
@@ -85,7 +90,8 @@ public class IncidenceService {
         // Descarga paralela de paginas de opendata
         List<CompletableFuture<OpenDataIncidenceResponse>> futurasPaginas = IntStream
                 .rangeClosed(2, totalPaginas) // Abrimos un Stream de 2 al total de paginas
-                .mapToObj(pagina -> CompletableFuture.supplyAsync(() -> { // Mapeamos cada pagina como un objeto completable
+                .mapToObj(pagina -> CompletableFuture.supplyAsync(() -> { // Mapeamos cada pagina como un objeto
+                                                                          // completable
                     log.debug("⬇️ [Hilo: {}] Solicitando página {}", Thread.currentThread().getName(), pagina);
                     return apiTrafico.listaIncidencias(pagina); // Obtenemos la pagina
                 }, executor)) // Bloque de hilos que usamos, declarado en AsyncConfig
@@ -93,9 +99,9 @@ public class IncidenceService {
 
         // Eliminacion de metadatos y concatenacion de resultados
         return Stream.concat( // Concatenamos cada pagina mediante flujos de datos
-                        Stream.of(primeraPagina),
-                        futurasPaginas.stream().map(CompletableFuture::join) // Esperamos que se complete el future
-                )
+                Stream.of(primeraPagina),
+                futurasPaginas.stream().map(CompletableFuture::join) // Esperamos que se complete el future
+        )
                 .map(OpenDataIncidenceResponse::incidences) // Extraemos la lista de camaras de la respuesta
                 .filter(Objects::nonNull) // Filtramos valores nulos
                 .flatMap(Collection::stream) // Eliminamos el resto de datos y unimos todas las camaras en un stream
@@ -104,21 +110,36 @@ public class IncidenceService {
 
     // Prepara los dtos y cachea los recursos para que no entren en conflicto
     private Map<Integer, Recurso> prepararYcachearRecursos(List<OpenDataIncidence> todosLosDtos) {
-        Map<Integer, OpenDataSource> recursosDtoMap = apiTrafico.listaRecursos().stream() // Abre un flujo de datos con los recursos de la api
-                .collect( //Crea una coleccion con los recursos
-                    Collectors.toMap( // Mapea los recursos
-                        OpenDataSource::id, // Les asigna su id como clave
-                        Function.identity(), // Asigna el recurso como valor
-                        (existente, nuevo) -> existente) // Comprueba si se repite para no devolverlo
-                    );
+        Map<Integer, OpenDataSource> recursosDtoMap = apiTrafico.listaRecursos().stream() // Abre un flujo de datos con
+                                                                                          // los recursos de la api
+                .collect( // Crea una coleccion con los recursos
+                        Collectors.toMap( // Mapea los recursos
+                                OpenDataSource::id, // Les asigna su id como clave
+                                Function.identity(), // Asigna el recurso como valor
+                                (existente, nuevo) -> existente) // Comprueba si se repite para no devolverlo
+                );
 
         Set<Integer> idsRecursosNecesarios = todosLosDtos.stream() // Abre un flujo de datos con las camaras
                 .map(OpenDataIncidence::sourceId) // Mapea los id de los recuros
                 .collect(Collectors.toSet()); // Setea los id como coleccion
 
-        Map<Integer, Recurso> recursosExistentes = recursoRepository.findAllById(idsRecursosNecesarios).stream() // Abre un flujo de datos con los idNecesarios que ya esten en bd
+        Map<Integer, Recurso> recursosExistentes = recursoRepository.findAllById(idsRecursosNecesarios).stream() // Abre
+                                                                                                                 // un
+                                                                                                                 // flujo
+                                                                                                                 // de
+                                                                                                                 // datos
+                                                                                                                 // con
+                                                                                                                 // los
+                                                                                                                 // idNecesarios
+                                                                                                                 // que
+                                                                                                                 // ya
+                                                                                                                 // esten
+                                                                                                                 // en
+                                                                                                                 // bd
                 .collect(
-                    Collectors.toMap(Recurso::getId, Function.identity())); // Genera una coleccion con los ids necesarios partiendo de los existentes
+                        Collectors.toMap(Recurso::getId, Function.identity())); // Genera una coleccion con los ids
+                                                                                // necesarios partiendo de los
+                                                                                // existentes
         log.debug("🔍 Encontrados {} recursos existentes en la BD.", recursosExistentes.size());
 
         // Genera los recursos necesarios
@@ -135,7 +156,8 @@ public class IncidenceService {
         return mapaDeRecursosFinal;
     }
 
-    private List<Incidence> validarYmapear(List<OpenDataIncidence> todosLosDtos, Map<Integer, Recurso> mapaDeRecursosFinal) {
+    private List<Incidence> validarYmapear(List<OpenDataIncidence> todosLosDtos,
+            Map<Integer, Recurso> mapaDeRecursosFinal) {
         List<CompletableFuture<Incidence>> incidencesValidadasFutures = todosLosDtos.stream()
                 .map(dto -> CompletableFuture.supplyAsync(() -> {
                     try {
@@ -143,10 +165,10 @@ public class IncidenceService {
                         if (recurso != null) {
                             // 1. Convertimos DTO a Entidad
                             Incidence entity = incidenceMapper.toEntity(dto, recurso);
-                            
+
                             // 2. 🔥 NUEVO: Normalizamos coordenadas (UTM a GPS) antes de devolver
                             coordinateNormalizer.normalize(entity);
-                            
+
                             return entity;
                         }
                     } catch (Exception e) {
@@ -164,7 +186,8 @@ public class IncidenceService {
 
     @Transactional // Importante para que JPA gestione el contexto
     private void persistenciaDatos(List<Incidence> incidencesValidadas) {
-        if (incidencesValidadas.isEmpty()) return;
+        if (incidencesValidadas.isEmpty())
+            return;
 
         // 1. Extraemos todos los IDs externos de las cámaras que llegan
         List<Integer> idsExternos = incidencesValidadas.stream()
@@ -174,34 +197,35 @@ public class IncidenceService {
         // 2. JPA: Traemos de la DB las posibles coincidencias (Entidades GESTIONADAS)
         List<Incidence> candidatasDB = incidenceRepository.findCandidatasPorIdsExternos(idsExternos);
 
-        // 3. Creamos un Mapa para búsqueda rápida: Clave "idExterno-idRecurso" -> Objeto Camera
+        // 3. Creamos un Mapa para búsqueda rápida: Clave "idExterno-idRecurso" ->
+        // Objeto Camera
         Map<String, Incidence> mapaExistentes = candidatasDB.stream()
                 .collect(Collectors.toMap(
-                    c -> generarClaveUnica(c), 
-                    c -> c
-                ));
+                        c -> generarClaveUnica(c),
+                        c -> c));
 
         List<Incidence> listaFinalParaGuardar = new ArrayList<>();
 
         // 4. Procesamos la lista que llegó de la API
         for (Incidence incidenciaEntrante : incidencesValidadas) {
             String claveLogica = generarClaveUnica(incidenciaEntrante);
-            
+
             Incidence incidenciaEnDB = mapaExistentes.get(claveLogica);
 
             if (incidenciaEnDB != null) {
                 // --- CASO UPDATE ---
-                // Usamos el objeto DE LA DB (que tiene el id_model interno) y le pegamos los datos nuevos
+                // Usamos el objeto DE LA DB (que tiene el id_model interno) y le pegamos los
+                // datos nuevos
                 actualizarDatos(incidenciaEnDB, incidenciaEntrante);
                 incidenciaEnDB.setUltimaActualizacion(LocalDateTime.now());
-                
+
                 listaFinalParaGuardar.add(incidenciaEnDB);
             } else {
                 // --- CASO INSERT ---
                 // Es totalmente nueva, no existe esa combinación ID + Recurso
                 incidenciaEntrante.setPrimeraInsercion(LocalDateTime.now());
                 incidenciaEntrante.setUltimaActualizacion(LocalDateTime.now());
-                
+
                 listaFinalParaGuardar.add(incidenciaEntrante);
             }
         }
@@ -235,7 +259,7 @@ public class IncidenceService {
         destino.setNivel(origen.getNivel());
         destino.setTipo(origen.getTipo());
         destino.setDescripcion(origen.getDescripcion());
-        
+
         // Si quieres actualizar también la relación del recurso:
         destino.setRecurso(origen.getRecurso());
     }
@@ -254,7 +278,7 @@ public class IncidenceService {
         Map<Integer, Recurso> mapaDeRecursosFinal = prepararYcachearRecursos(todosLosDtos);
         log.info("✅ FASE 2 COMPLETADA. Mapa de recursos final contiene {} entradas.", mapaDeRecursosFinal.size());
 
-        // --- FASE 3: VALIDACIÓN Y MAPEO EN PARALELO --- 
+        // --- FASE 3: VALIDACIÓN Y MAPEO EN PARALELO ---
         log.info("⚡ INICIO FASE 3: Validando y Mapeando en paralelo...");
         List<Incidence> incidencesValidadas = validarYmapear(todosLosDtos, mapaDeRecursosFinal);
         log.info("✅ FASE 3: Incidencias validadas y mapeadas");
@@ -284,5 +308,5 @@ public class IncidenceService {
             return respuesta;
         }
     }
-    
+
 }

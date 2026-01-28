@@ -2,7 +2,6 @@ package com.plaiaundi.sepe.seid.infrastructure.mappers;
 
 import com.plaiaundi.sepe.seid.dominio.model.Recurso;
 import com.plaiaundi.sepe.seid.dominio.util.CameraValidator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
@@ -13,8 +12,11 @@ import java.net.URI;
 @Component
 public class CameraMapper {
 
-    @Autowired
-    private CameraValidator cameraValidator;
+    private final CameraValidator cameraValidator;
+
+    public CameraMapper(CameraValidator cameraValidator) {
+        this.cameraValidator = cameraValidator;
+    }
 
     public OpenDataCamera toDto(Camera entity) {
         if (entity == null) {
@@ -22,27 +24,17 @@ public class CameraMapper {
         }
 
         return new OpenDataCamera(
-            entity.getDireccion(),
-            entity.getId(),
-            entity.getNombre(),
-            entity.getKilometro(),
-            entity.getLatitud(),
-            entity.getLongitud(),
-            entity.getCarretera(),
-            entity.getRecurso().getId(),
-            entity.getUrlImage().toString()
-        );
+                entity.getDireccion(),
+                entity.getId(),
+                entity.getNombre(),
+                entity.getKilometro(),
+                entity.getLatitud(),
+                entity.getLongitud(),
+                entity.getCarretera(),
+                entity.getRecurso() != null ? entity.getRecurso().getId() : 0,
+                entity.getUrlImage() != null ? entity.getUrlImage().toString() : null);
     }
 
-    /**
-     * Convierte un DTO de cámara a una entidad Camera.
-     * Este método ahora requiere que el Recurso ya esté resuelto y se pase como argumento.
-     *
-     * @param dto El objeto de transferencia de datos de la cámara.
-     * @param recurso La entidad Recurso ya gestionada que se asociará a la cámara.
-     * @return La entidad Camera mapeada.
-     * @throws MalformedURLException Si la URL de la imagen no es válida.
-     */
     public Camera toEntity(OpenDataCamera dto, Recurso recurso) throws MalformedURLException {
         if (dto == null) {
             return null;
@@ -56,14 +48,12 @@ public class CameraMapper {
         entity.setLatitud(dto.latitude());
         entity.setLongitud(dto.longitude());
         entity.setCarretera(dto.road());
-        entity.setRecurso(recurso); // Asignación directa del recurso ya resuelto
-        entity.setUrlImage(
-            URI
-                .create(
-                    cameraValidator.limpiarYTransformarUrl(dto.urlImage())
-                )
-                .toURL()
-        );
+        entity.setRecurso(recurso);
+
+        String cleanUrl = cameraValidator.limpiarYTransformarUrl(dto.urlImage());
+        if (cleanUrl != null) {
+            entity.setUrlImage(URI.create(cleanUrl).toURL());
+        }
 
         return entity;
     }

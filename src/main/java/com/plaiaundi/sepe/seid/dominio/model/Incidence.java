@@ -19,14 +19,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "incidencias", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_incidencia_id_resource", columnNames = {"id", "recurso_id"})
+        @UniqueConstraint(name = "uk_incidencia_id_resource", columnNames = { "id", "recurso_id" })
 })
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Incidence {
@@ -40,7 +38,7 @@ public class Incidence {
     @Column(name = "id")
     private int id;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinColumn(name = "recurso_id")
     private Recurso recurso;
 
@@ -70,4 +68,165 @@ public class Incidence {
     @Transient // Este campo no se guarda en BD, es solo para lógica
     @JsonProperty(value = "new", access = JsonProperty.Access.WRITE_ONLY)
     private boolean isNew = true;
+
+    // Manual Getters and Setters
+    public Integer getIdModel() {
+        return idModel;
+    }
+
+    public void setIdModel(Integer idModel) {
+        this.idModel = idModel;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Recurso getRecurso() {
+        return recurso;
+    }
+
+    public void setRecurso(Recurso recurso) {
+        this.recurso = recurso;
+    }
+
+    public String getProvincia() {
+        return provincia;
+    }
+
+    public void setProvincia(String provincia) {
+        this.provincia = provincia;
+    }
+
+    public String getCausa() {
+        return causa;
+    }
+
+    public void setCausa(String causa) {
+        this.causa = causa;
+    }
+
+    public LocalDateTime getFecIni() {
+        return fecIni;
+    }
+
+    public void setFecIni(LocalDateTime fecIni) {
+        this.fecIni = fecIni;
+    }
+
+    public String getCarretera() {
+        return carretera;
+    }
+
+    public void setCarretera(String carretera) {
+        this.carretera = carretera;
+    }
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+
+    public double getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(double latitud) {
+        this.latitud = latitud;
+    }
+
+    public double getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(double longitud) {
+        this.longitud = longitud;
+    }
+
+    public String getCiudad() {
+        return ciudad;
+    }
+
+    public void setCiudad(String ciudad) {
+        this.ciudad = ciudad;
+    }
+
+    public LocalDateTime getFecFin() {
+        return fecFin;
+    }
+
+    public void setFecFin(LocalDateTime fecFin) {
+        this.fecFin = fecFin;
+    }
+
+    public String getNivel() {
+        return nivel;
+    }
+
+    public void setNivel(String nivel) {
+        this.nivel = nivel;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public LocalDateTime getPrimeraInsercion() {
+        return primeraInsercion;
+    }
+
+    public void setPrimeraInsercion(LocalDateTime primeraInsercion) {
+        this.primeraInsercion = primeraInsercion;
+    }
+
+    public LocalDateTime getUltimaActualizacion() {
+        return ultimaActualizacion;
+    }
+
+    public void setUltimaActualizacion(LocalDateTime ultimaActualizacion) {
+        this.ultimaActualizacion = ultimaActualizacion;
+    }
+
+    public boolean isModificar() {
+        return modificar;
+    }
+
+    public void setModificar(boolean modificar) {
+        this.modificar = modificar;
+    }
+
+    public Estado getEstado() {
+        return estado;
+    }
+
+    public void setEstado(Estado estado) {
+        this.estado = estado;
+    }
+
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public void setNew(boolean aNew) {
+        isNew = aNew;
+    }
 }

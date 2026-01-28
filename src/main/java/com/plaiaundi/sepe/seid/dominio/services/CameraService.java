@@ -13,8 +13,8 @@ import com.plaiaundi.sepe.seid.infrastructure.ApiTrafico;
 import com.plaiaundi.sepe.seid.infrastructure.CoordinateNormalizer;
 import com.plaiaundi.sepe.seid.infrastructure.mappers.CameraMapper;
 import com.plaiaundi.sepe.seid.infrastructure.mappers.RecursoMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.resilience.annotation.Retryable;
@@ -31,26 +31,36 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Service
-@Slf4j
 public class CameraService {
 
-    @Autowired
-    private ApiTrafico apiTrafico;
-    @Autowired
-    private CameraRepository cameraRepository;
-    @Autowired
-    private RecursoRepository recursoRepository;
-    @Autowired
-    private CameraMapper cameraMapper;
-    @Autowired
-    private RecursoMapper recursoMapper;
-    @Autowired
-    private CameraValidator cameraValidator;
-    @Autowired
-    private CoordinateNormalizer coordinateNormalizer;
-    @Autowired
-    @Qualifier("hilosCamaras")
-    private Executor executor;
+    private static final Logger log = LoggerFactory.getLogger(CameraService.class);
+
+    private final ApiTrafico apiTrafico;
+    private final CameraRepository cameraRepository;
+    private final RecursoRepository recursoRepository;
+    private final CameraMapper cameraMapper;
+    private final RecursoMapper recursoMapper;
+    private final CameraValidator cameraValidator;
+    private final CoordinateNormalizer coordinateNormalizer;
+    private final Executor executor;
+
+    public CameraService(ApiTrafico apiTrafico,
+            CameraRepository cameraRepository,
+            RecursoRepository recursoRepository,
+            CameraMapper cameraMapper,
+            RecursoMapper recursoMapper,
+            CameraValidator cameraValidator,
+            CoordinateNormalizer coordinateNormalizer,
+            @Qualifier("hilosCamaras") Executor executor) {
+        this.apiTrafico = apiTrafico;
+        this.cameraRepository = cameraRepository;
+        this.recursoRepository = recursoRepository;
+        this.cameraMapper = cameraMapper;
+        this.recursoMapper = recursoMapper;
+        this.cameraValidator = cameraValidator;
+        this.coordinateNormalizer = coordinateNormalizer;
+        this.executor = executor;
+    }
 
     public List<Camera> getCameras() {
         return cameraRepository.findAllByEstado(Estado.ACTIVA);
@@ -66,7 +76,8 @@ public class CameraService {
         // Descarga paralela de paginas de opendata
         List<CompletableFuture<OpenDataCameraResponse>> futurasPaginas = IntStream
                 .rangeClosed(2, totalPaginas) // Abrimos un Stream de 2 al total de paginas
-                .mapToObj(pagina -> CompletableFuture.supplyAsync(() -> { // Mapeamos cada pagina como un objeto completable
+                .mapToObj(pagina -> CompletableFuture.supplyAsync(() -> { // Mapeamos cada pagina como un objeto
+                                                                          // completable
                     log.debug("⬇️ [Hilo: {}] Solicitando página {}", Thread.currentThread().getName(), pagina);
                     return apiTrafico.listaCamaras(pagina); // Obtenemos la pagina
                 }, executor)) // Bloque de hilos que usamos, declarado en AsyncConfig
@@ -74,9 +85,9 @@ public class CameraService {
 
         // Eliminacion de metadatos y concatenacion de resultados
         return Stream.concat( // Concatenamos cada pagina mediante flujos de datos
-                        Stream.of(primeraPagina),
-                        futurasPaginas.stream().map(CompletableFuture::join) // Esperamos que se complete el future
-                )
+                Stream.of(primeraPagina),
+                futurasPaginas.stream().map(CompletableFuture::join) // Esperamos que se complete el future
+        )
                 .map(OpenDataCameraResponse::cameras) // Extraemos la lista de camaras de la respuesta
                 .filter(Objects::nonNull) // Filtramos valores nulos
                 .flatMap(Collection::stream) // Eliminamos el resto de datos y unimos todas las camaras en un stream
@@ -85,21 +96,36 @@ public class CameraService {
 
     // Prepara los dtos y cachea los recursos para que no entren en conflicto
     private Map<Integer, Recurso> prepararYcachearRecursos(List<OpenDataCamera> todosLosDtos) {
-        Map<Integer, OpenDataSource> recursosDtoMap = apiTrafico.listaRecursos().stream() // Abre un flujo de datos con los recursos de la api
-                .collect( //Crea una coleccion con los recursos
-                    Collectors.toMap( // Mapea los recursos
-                        OpenDataSource::id, // Les asigna su id como clave
-                        Function.identity(), // Asigna el recurso como valor
-                        (existente, nuevo) -> existente) // Comprueba si se repite para no devolverlo
-                    );
+        Map<Integer, OpenDataSource> recursosDtoMap = apiTrafico.listaRecursos().stream() // Abre un flujo de datos con
+                                                                                          // los recursos de la api
+                .collect( // Crea una coleccion con los recursos
+                        Collectors.toMap( // Mapea los recursos
+                                OpenDataSource::id, // Les asigna su id como clave
+                                Function.identity(), // Asigna el recurso como valor
+                                (existente, nuevo) -> existente) // Comprueba si se repite para no devolverlo
+                );
 
         Set<Integer> idsRecursosNecesarios = todosLosDtos.stream() // Abre un flujo de datos con las camaras
                 .map(OpenDataCamera::sourceId) // Mapea los id de los recuros
                 .collect(Collectors.toSet()); // Setea los id como coleccion
 
-        Map<Integer, Recurso> recursosExistentes = recursoRepository.findAllById(idsRecursosNecesarios).stream() // Abre un flujo de datos con los idNecesarios que ya esten en bd
+        Map<Integer, Recurso> recursosExistentes = recursoRepository.findAllById(idsRecursosNecesarios).stream() // Abre
+                                                                                                                 // un
+                                                                                                                 // flujo
+                                                                                                                 // de
+                                                                                                                 // datos
+                                                                                                                 // con
+                                                                                                                 // los
+                                                                                                                 // idNecesarios
+                                                                                                                 // que
+                                                                                                                 // ya
+                                                                                                                 // esten
+                                                                                                                 // en
+                                                                                                                 // bd
                 .collect(
-                    Collectors.toMap(Recurso::getId, Function.identity())); // Genera una coleccion con los ids necesarios partiendo de los existentes
+                        Collectors.toMap(Recurso::getId, Function.identity())); // Genera una coleccion con los ids
+                                                                                // necesarios partiendo de los
+                                                                                // existentes
         log.debug("🔍 Encontrados {} recursos existentes en la BD.", recursosExistentes.size());
 
         // Genera los recursos necesarios
@@ -119,7 +145,9 @@ public class CameraService {
     private List<Camera> validarYmapear(List<OpenDataCamera> todosLosDtos, Map<Integer, Recurso> mapaDeRecursosFinal) {
         List<CompletableFuture<Camera>> camarasValidadasFutures = todosLosDtos.stream()
                 .map(dto -> CompletableFuture.supplyAsync(() -> {
-                    log.debug("⬇️ Revisando imagen camara {} de recurso {} ", dto.cameraId(), dto.sourceId()); // Opcional reducir logs
+                    log.debug("⬇️ Revisando imagen camara {} de recurso {} ", dto.cameraId(), dto.sourceId()); // Opcional
+                                                                                                               // reducir
+                                                                                                               // logs
                     if (cameraValidator.isValid(dto)) {
                         log.debug("✅ Imagen valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
                         try {
@@ -127,10 +155,10 @@ public class CameraService {
                             if (recurso != null) {
                                 // 1. Convertimos DTO a Entidad
                                 Camera entity = cameraMapper.toEntity(dto, recurso);
-                                
+
                                 // 2. 🔥 NUEVO: Normalizamos coordenadas (UTM a GPS) antes de devolver
                                 coordinateNormalizer.normalize(entity);
-                                
+
                                 return entity;
                             }
                         } catch (Exception e) {
@@ -150,7 +178,8 @@ public class CameraService {
 
     @Transactional // Importante para que JPA gestione el contexto
     private void persistenciaDatos(List<Camera> camarasValidadas) {
-        if (camarasValidadas.isEmpty()) return;
+        if (camarasValidadas.isEmpty())
+            return;
 
         // 1. Extraemos todos los IDs externos de las cámaras que llegan
         List<Integer> idsExternos = camarasValidadas.stream()
@@ -160,28 +189,29 @@ public class CameraService {
         // 2. JPA: Traemos de la DB las posibles coincidencias (Entidades GESTIONADAS)
         List<Camera> candidatasDB = cameraRepository.findCandidatasPorIdsExternos(idsExternos);
 
-        // 3. Creamos un Mapa para búsqueda rápida: Clave "idExterno-idRecurso" -> Objeto Camera
+        // 3. Creamos un Mapa para búsqueda rápida: Clave "idExterno-idRecurso" ->
+        // Objeto Camera
         Map<String, Camera> mapaExistentes = candidatasDB.stream()
                 .collect(Collectors.toMap(
-                    c -> generarClaveUnica(c), 
-                    c -> c
-                ));
+                        c -> generarClaveUnica(c),
+                        c -> c));
 
         List<Camera> listaFinalParaGuardar = new ArrayList<>();
 
         // 4. Procesamos la lista que llegó de la API
         for (Camera camaraEntrante : camarasValidadas) {
             String claveLogica = generarClaveUnica(camaraEntrante);
-            
+
             Camera camaraEnDB = mapaExistentes.get(claveLogica);
 
             if (camaraEnDB != null) {
                 // --- CASO UPDATE ---
-                // Usamos el objeto DE LA DB (que tiene el id_model interno) y le pegamos los datos nuevos
+                // Usamos el objeto DE LA DB (que tiene el id_model interno) y le pegamos los
+                // datos nuevos
                 actualizarDatos(camaraEnDB, camaraEntrante);
                 camaraEnDB.setNew(false);
                 camaraEnDB.setUltimaActualizacion(LocalDateTime.now());
-                
+
                 listaFinalParaGuardar.add(camaraEnDB);
             } else {
                 // --- CASO INSERT ---
@@ -189,7 +219,7 @@ public class CameraService {
                 camaraEntrante.setNew(true);
                 camaraEntrante.setPrimeraInsercion(LocalDateTime.now());
                 camaraEntrante.setUltimaActualizacion(LocalDateTime.now());
-                
+
                 listaFinalParaGuardar.add(camaraEntrante);
             }
         }
@@ -235,7 +265,7 @@ public class CameraService {
         Map<Integer, Recurso> mapaDeRecursosFinal = prepararYcachearRecursos(todosLosDtos);
         log.info("✅ FASE 2 COMPLETADA. Mapa de recursos final contiene {} entradas.", mapaDeRecursosFinal.size());
 
-        // --- FASE 3: VALIDACIÓN Y MAPEO EN PARALELO --- 
+        // --- FASE 3: VALIDACIÓN Y MAPEO EN PARALELO ---
         log.info("⚡ INICIO FASE 3: Validando y Mapeando en paralelo...");
         List<Camera> camarasValidadas = validarYmapear(todosLosDtos, mapaDeRecursosFinal);
         log.info("✅ FASE 3: Camaras validadas y mapeadas");

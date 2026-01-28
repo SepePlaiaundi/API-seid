@@ -1,97 +1,23 @@
 package com.plaiaundi.sepe.seid.dto;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-public class OpenDataCameraTest {
-    @Test
-    void testGetAddress() {
-
-    }
+class OpenDataCameraTest {
 
     @Test
-    void testGetCameraId() {
+    void testConstructorAndGetters() {
+        OpenDataCamera dto = new OpenDataCamera(
+                "Address", 101, "Name", "10.5", 43.0, -1.0, "Road", 1, "url");
 
-    }
-
-    @Test
-    void testGetCameraName() {
-
-    }
-
-    @Test
-    void testGetKilometer() {
-
-    }
-
-    @Test
-    void testGetLatitude() {
-
-    }
-
-    @Test
-    void testGetLongitude() {
-
-    }
-
-    @Test
-    void testGetRoad() {
-
-    }
-
-    @Test
-    void testGetSourceId() {
-
-    }
-
-    @Test
-    void testGetUrlImage() {
-
-    }
-
-    @Test
-    void testSetAddress() {
-
-    }
-
-    @Test
-    void testSetCameraId() {
-
-    }
-
-    @Test
-    void testSetCameraName() {
-
-    }
-
-    @Test
-    void testSetKilometer() {
-
-    }
-
-    @Test
-    void testSetLatitude() {
-
-    }
-
-    @Test
-    void testSetLongitude() {
-
-    }
-
-    @Test
-    void testSetRoad() {
-
-    }
-
-    @Test
-    void testSetSourceId() {
-
-    }
-
-    @Test
-    void testSetUrlImage() {
-
+        assertEquals("Address", dto.address());
+        assertEquals(101, dto.cameraId());
+        assertEquals("Name", dto.cameraName());
+        assertEquals("10.5", dto.kilometer());
+        assertEquals(43.0, dto.latitude());
+        assertEquals(-1.0, dto.longitude());
+        assertEquals("Road", dto.road());
+        assertEquals(1, dto.sourceId());
+        assertEquals("url", dto.urlImage());
     }
 }

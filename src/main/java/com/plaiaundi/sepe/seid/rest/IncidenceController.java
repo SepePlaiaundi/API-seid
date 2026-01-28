@@ -4,24 +4,25 @@ import java.util.List;
 
 import com.plaiaundi.sepe.seid.dominio.services.IncidenceService;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
 import com.plaiaundi.sepe.seid.dominio.model.Response;
 
-
-
-
-@Slf4j
 @RestController
 @RequestMapping("/incidencia")
 @CrossOrigin(origins = "*")
 public class IncidenceController {
 
-    @Autowired
-    private IncidenceService incidenceService;
+    private static final Logger log = LoggerFactory.getLogger(IncidenceController.class);
+
+    private final IncidenceService incidenceService;
+
+    public IncidenceController(IncidenceService incidenceService) {
+        this.incidenceService = incidenceService;
+    }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Incidence> listaDeIncidencias() {
@@ -34,21 +35,21 @@ public class IncidenceController {
         log.info("GET /incidencia/tunel");
         return incidenceService.syncAllIncidencesFromAPI();
     }
-    
+
     @PostMapping("sync")
     public boolean postMethodName() {
         log.info("POST /incidence/sync");
         incidenceService.syncAllIncidencesFromAPI();
         return true;
     }
-    
-    @GetMapping(value="/{tipo}", produces =  MediaType.APPLICATION_JSON_VALUE )
+
+    @GetMapping(value = "/{tipo}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Incidence> getIncidencesByTipo(@PathVariable String tipo) {
         return incidenceService.getIncidences(tipo);
     }
 
-    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE) 
-    public Response guardarIncidencia(@RequestParam Incidence incidencia) {
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public Response guardarIncidencia(@RequestBody Incidence incidencia) {
         return incidenceService.save(incidencia);
     }
 }

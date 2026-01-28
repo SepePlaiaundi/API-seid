@@ -1,79 +1,46 @@
 package com.plaiaundi.sepe.seid.dominio.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.LocalDateTime;
+import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-public class CameraTest {
-
-    @Test
-    void testConstructor() {
-        Camera cam = new Camera();
-        assertNotEquals(null, cam);
-    }
+class CameraTest {
 
     @Test
-    void testGetCarretera() {
-        Camera cam = new Camera();
-        String dato = "AP-8";
-        cam.setCarretera(dato);
-        assertEquals(dato, cam.getCarretera());
+    void testGettersAndSetters() throws MalformedURLException {
+        Camera camera = new Camera();
+        Recurso recurso = new Recurso(1, "Desc ES", "Desc EU");
+        URL url = new URL("http://example.com/img.jpg");
+        LocalDateTime now = LocalDateTime.now();
+
+        camera.setId(101);
+        camera.setNombre("Cam 1");
+        camera.setDireccion("Dir 1");
+        camera.setKilometro("Km 1");
+        camera.setLatitud(10.0);
+        camera.setLongitud(20.0);
+        camera.setCarretera("A-1");
+        camera.setRecurso(recurso);
+        camera.setUrlImage(url);
+        camera.setEstado(Estado.ACTIVA);
+        camera.setPrimeraInsercion(now);
+        camera.setUltimaActualizacion(now);
+        camera.setIdModel(99);
+
+        assertEquals(101, camera.getId());
+        assertEquals("Cam 1", camera.getNombre());
+        assertEquals("Dir 1", camera.getDireccion());
+        assertEquals("Km 1", camera.getKilometro());
+        assertEquals(10.0, camera.getLatitud());
+        assertEquals(20.0, camera.getLongitud());
+        assertEquals("A-1", camera.getCarretera());
+        assertEquals(recurso, camera.getRecurso());
+        assertEquals(url, camera.getUrlImage());
+        assertEquals(Estado.ACTIVA, camera.getEstado());
+        assertEquals(now, camera.getPrimeraInsercion());
+        assertEquals(now, camera.getUltimaActualizacion());
+        assertEquals(99, camera.getIdModel());
     }
-
-    @Test
-    void testGetDireccion() {
-        Camera cam = new Camera();
-        String dato = "Calle de la piruleta";
-        cam.setDireccion(dato);
-        assertEquals(dato, cam.getDireccion());
-
-    }
-
-    /*
-     * @Test
-     * void testGetId() {
-     * Camera cam = new Camera();
-     * String dato = "2345RTG";
-     * cam.setId(dato);
-     * assertEquals(dato, cam.getId());
-     * }
-     */
-
-    @Test
-    void testGetKilometro() {
-        Camera cam = new Camera();
-        String dato = "Km. 20";
-        cam.setKilometro(dato);
-        assertEquals(dato, cam.getKilometro());
-    }
-
-    /*
-     * @Test
-     * void testGetLatitud() {
-     * Camera cam = new Camera();
-     * String dato = "846531";
-     * cam.setLatitud(dato);
-     * assertEquals(dato, cam.getLatitud());
-     * }
-     * 
-     * @Test
-     * void testGetLongitud() {
-     * Camera cam = new Camera();
-     * String dato = "641523";
-     * cam.setLongitud(dato);
-     * assertEquals(dato, cam.getLongitud());
-     * }
-     */
-
-    @Test
-    void testGetNombre() {
-        Camera cam = new Camera();
-        String dato = "Camara 01";
-        cam.setNombre(dato);
-        assertEquals(dato, cam.getNombre());
-    }
-
 }

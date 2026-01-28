@@ -1,12 +1,20 @@
 package com.plaiaundi.sepe.seid.dominio.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Response {
-    String mensaje;
+    private String mensaje;
+
+    public Response() {
+    }
+
+    public Response(String mensaje) {
+        this.mensaje = mensaje;
+    }
+
+    public String getMensaje() {
+        return mensaje;
+    }
+
+    public void setMensaje(String mensaje) {
+        this.mensaje = mensaje;
+    }
 }
