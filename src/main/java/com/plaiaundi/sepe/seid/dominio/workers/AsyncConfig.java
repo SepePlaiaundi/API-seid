@@ -1,4 +1,4 @@
-package com.plaiaundi.sepe.seid.infrastructure;
+package com.plaiaundi.sepe.seid.dominio.workers;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

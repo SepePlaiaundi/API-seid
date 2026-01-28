@@ -1,4 +1,4 @@
-package com.plaiaundi.sepe.seid.infrastructure;
+package com.plaiaundi.sepe.seid.dominio.workers;
 
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
 import com.plaiaundi.sepe.seid.dominio.services.IncidenceService;

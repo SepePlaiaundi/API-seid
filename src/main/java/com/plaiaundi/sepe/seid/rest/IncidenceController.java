@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
+import com.plaiaundi.sepe.seid.dominio.model.Response;
 
 
 
@@ -41,6 +42,13 @@ public class IncidenceController {
         return true;
     }
     
+    @GetMapping(value="/{tipo}", produces =  MediaType.APPLICATION_JSON_VALUE )
+    public List<Incidence> getIncidencesByTipo(@PathVariable String tipo) {
+        return incidenceService.getIncidences(tipo);
+    }
 
-    
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE) 
+    public Response guardarIncidencia(@RequestParam Incidence incidencia) {
+        return incidenceService.save(incidencia);
+    }
 }

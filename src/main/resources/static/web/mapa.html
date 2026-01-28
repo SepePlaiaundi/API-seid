@@ -81,20 +81,46 @@
 
             // Pintar Incidencias
             incidencias.forEach(inc => {
-                // IMPORTANTE: Verificamos que no sean 0 y que existan
                 if (inc.latitud && inc.longitud && inc.latitud !== 0) {
-                    L.marker([inc.latitud, inc.longitud], { icon: redIcon }).addTo(map)
+            
+                    // 1. Definimos el color (usando el objeto o el switch corregido)
+                    const colores = {
+                        "Obras": "#FFF000",
+                        "Otras incidencias": "#F000FF",
+                        "Accidente": "#FF0000",
+                        "Seguridad vial": "#00F0FF",
+                        "Vialidad invernal tramos": "#FF5500",
+                        "Puertos de montaña": "#0000FF",
+                        "Meteorológica": "#808080" // Gris un poco más oscuro para que se vea
+                    };
+                    
+                    let color = colores[inc.tipo] || "#333333"; // Negro si falla
+            
+                    // 2. Creamos el icono dinámico HTML (SVG)
+                    // El 'fill' del SVG recibe la variable 'color'
+                    const iconDinamico = L.divIcon({
+                        className: 'custom-marker', // Clase vacía para evitar bordes blancos por defecto
+                        html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">
+                                 <path fill="${color}" stroke="#000" stroke-width="1" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                 <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                               </svg>`,
+                        iconSize: [36, 36],   // Tamaño del icono
+                        iconAnchor: [18, 36], // Punto de anclaje (la punta de abajo, mitad de ancho, alto total)
+                        popupAnchor: [0, -34] // Donde se abre el popup respecto a la punta
+                    });
+            
+                    // 3. Añadimos el marcador con el nuevo icono
+                    L.marker([inc.latitud, inc.longitud], { icon: iconDinamico }).addTo(map)
                         .bindPopup(`
                             <div style="min-width: 200px">
-                                <b style="color:red">⚠️ ${inc.tipo || 'Incidencia'}</b><br>
+                                <b style="color:${color}">⚠️ ${inc.tipo || 'Incidencia'}</b><br>
                                 <b>Causa:</b> ${inc.causa}<br>
                                 <b>Carretera:</b> ${inc.carretera}<br>
                                 <p>${inc.descripcion || ''}</p>
                             </div>
                         `);
+            
                     nIncidencias++;
-                } else {
-                    console.warn("Incidencia ignorada por coordenadas 0 o nulas:", inc);
                 }
             });
 

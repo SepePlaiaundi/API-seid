@@ -20,4 +20,6 @@ public interface IncidenceRepository extends JpaRepository<Incidence, Integer> {
     @Query("SELECT i FROM Incidence i WHERE i.id IN :ids")
     List<Incidence> findCandidatasPorIdsExternos(@Param("ids") List<Integer> idsExternos);
 
+    List<Incidence> findAllByTipo(String tipo);
+
 }

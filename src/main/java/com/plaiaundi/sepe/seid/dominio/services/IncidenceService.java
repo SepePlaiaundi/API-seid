@@ -29,7 +29,9 @@ import com.plaiaundi.sepe.seid.dominio.model.Camera;
 import com.plaiaundi.sepe.seid.dominio.model.Estado;
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
 import com.plaiaundi.sepe.seid.dominio.model.Recurso;
+import com.plaiaundi.sepe.seid.dominio.model.Response;
 import com.plaiaundi.sepe.seid.dominio.util.CameraValidator;
+import com.plaiaundi.sepe.seid.dominio.util.IncidenceValidator;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
 import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
 import com.plaiaundi.sepe.seid.dto.OpenDataIncidence;
@@ -54,6 +56,8 @@ public class IncidenceService {
     @Autowired
     private RecursoRepository recursoRepository;
     @Autowired
+    private IncidenceValidator incidenceValidator;
+    @Autowired
     private IncidenceMapper incidenceMapper;
     @Autowired
     private RecursoMapper recursoMapper;
@@ -72,7 +76,8 @@ public class IncidenceService {
     private List<OpenDataIncidence> obtencionDeDatosCrudos() {
         // Descarga de pagina inicial para obtencion de metadata
         log.debug("📄 [Main Thread] Descargando página 1 (Síncrona)...");
-        OpenDataIncidenceResponse primeraPagina = apiTrafico.listaIncidencias();
+        LocalDateTime now = LocalDateTime.now();
+        OpenDataIncidenceResponse primeraPagina = apiTrafico.listaIncidenciasPorFecha(now.getYear(), now.getMonthValue(), now.getDayOfMonth());
         int totalPaginas = primeraPagina.totalPages();
         totalPaginas = totalPaginas > MAX_PAGINAS ? MAX_PAGINAS : totalPaginas;
         log.debug("📚 Total páginas detectadas: {}", totalPaginas);
@@ -261,6 +266,23 @@ public class IncidenceService {
 
         log.info("🏁 FIN: Sincronización de incidencias. Total incidencias procesadas: {}", incidencesValidadas.size());
         return incidencesValidadas;
+    }
+
+    public List<Incidence> getIncidences(String tipo) {
+        return incidenceRepository.findAllByTipo(tipo);
+    }
+
+    public Response save(Incidence incidencia) {
+        Response respuesta = new Response();
+        try {
+            incidencia = incidenceValidator.validar(incidencia);
+            incidenceRepository.save(incidencia);
+            respuesta.setMensaje("Incidencia guardada correctamente");
+        } catch (Exception e) {
+            respuesta.setMensaje("Ha ocurrido un error al guardar la incidencia");
+        } finally {
+            return respuesta;
+        }
     }
     
 }
