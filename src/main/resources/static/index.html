@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEPE Plaiaundi - Control API SEID</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --info: #17a2b8;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
+            color: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: var(--info);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--info);
+            color: var(--info);
+        }
+
+        .btn-outline:hover {
+            background: var(--info);
+            color: white;
+        }
+
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status-loading {
+            background: var(--secondary);
+            display: block !important;
+        }
+
+        .status-ok {
+            background: var(--success);
+            display: block !important;
+        }
+
+        .status-error {
+            background: #dc3545;
+            display: block !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>SEID Dashboard</h1>
+
+        <div class="grid">
+            <!-- Navegación -->
+            <div class="card">
+                <h2>Navegación</h2>
+                <p>Accede a las aplicaciones web integradas.</p>
+                <a href="/web/index.html" class="btn btn-outline">Listado de Cámaras</a>
+                <a href="/web/mapa.html" class="btn btn-outline" style="margin-top: 10px;">Mapa de Incidencias</a>
+            </div>
+
+            <!-- Control API -->
+            <div class="card">
+                <h2>Sincronización</h2>
+                <p>Actualiza manualmente los datos de la API.</p>
+                <button onclick="sync('camara')" class="btn btn-primary">Sincronizar Cámaras</button>
+                <button onclick="sync('incidencia')" class="btn btn-success" style="margin-top: 10px;">Sincronizar
+                    Incidencias</button>
+            </div>
+
+            <!-- Documentación -->
+            <div class="card">
+                <h2>API Documentation</h2>
+                <p>Explora y prueba la API con Swagger UI.</p>
+                <a href="/swagger-ui/index.html" class="btn btn-outline"
+                    style="background: rgba(133, 234, 45, 0.1); border-color: #85ea2d; color: #85ea2d;">Ir a Swagger
+                    UI</a>
+            </div>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function sync(type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status-loading';
+            statusDiv.innerText = `Sincronizando ${type}s...`;
+
+            try {
+                const response = await fetch(`/${type}/sync`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    statusDiv.className = 'status-ok';
+                    statusDiv.innerText = `✅ Sincronización de ${type}s completada con éxito.`;
+                } else {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+            } catch (error) {
+                statusDiv.className = 'status-error';
+                statusDiv.innerText = `❌ Error al sincronizar ${type}s: ${error.message}`;
+            }
+
+            // Limpiar mensaje después de 5 segundos
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+
+</body>
+
+</html>
