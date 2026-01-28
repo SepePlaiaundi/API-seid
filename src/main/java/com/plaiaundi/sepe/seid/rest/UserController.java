@@ -68,7 +68,20 @@ public class UserController {
     @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<UserResponse> list() {
         return userRepository.findAll().stream()
-                .map(user -> new UserResponse(user.getNombreCompleto(), user.getEmail()))
+                .map(user -> new UserResponse(user.getEmail(), user.getNombreCompleto()))
                 .toList();
     }
+
+    @PutMapping("/update")
+    public ResponseEntity<Void> update(@RequestBody UserUpdateRequest request) {
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setNombreCompleto(request.nombreCompleto());
+
+        userRepository.save(user);
+        return ResponseEntity.ok().build();
+    }
+
 }
