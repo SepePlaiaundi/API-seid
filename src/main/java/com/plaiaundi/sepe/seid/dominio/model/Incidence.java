@@ -1,11 +1,6 @@
 package com.plaiaundi.sepe.seid.dominio.model;
 
-import java.net.URL;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Persistable;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,17 +18,18 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
-
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "camaras", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_camara_id_resource", columnNames = {"id", "recurso_id"})
+@Table(name = "incidencias", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_incidencia_id_resource", columnNames = {"id", "recurso_id"})
 })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Camera implements Persistable<Integer> {
+public class Incidence {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,20 +38,25 @@ public class Camera implements Persistable<Integer> {
     private Integer idModel;
 
     @Column(name = "id")
-    private Integer id;
-
-    private String direccion;
-    private String nombre;
-    private String kilometro;
-    private double latitud;
-    private double longitud;
-    private String carretera;
+    private int id;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "recurso_id")
     private Recurso recurso;
 
-    private URL urlImage;
+    private String provincia;
+    private String causa;
+    private LocalDateTime fecIni;
+    private String carretera;
+    private String direccion;
+    private double latitud;
+    private double longitud;
+    private String ciudad;
+    private LocalDateTime fecFin;
+    private String nivel;
+    private String tipo;
+    private String descripcion;
+
     private LocalDateTime primeraInsercion = LocalDateTime.now();
     private LocalDateTime ultimaActualizacion;
 
@@ -69,7 +70,4 @@ public class Camera implements Persistable<Integer> {
     @Transient // Este campo no se guarda en BD, es solo para lógica
     @JsonProperty(value = "new", access = JsonProperty.Access.WRITE_ONLY)
     private boolean isNew = true;
-
-
-
 }

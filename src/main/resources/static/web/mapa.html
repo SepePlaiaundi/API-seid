@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Cámaras - Bizkaia</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        #status {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: white; padding: 12px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            max-width: 250px;
+        }
+        .popup-img { width: 100%; border-radius: 4px; margin-top: 8px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="status">Cargando cámaras de Bizkaia...</div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const map = L.map('map').setView([43.30, -2.96], 11);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        async function cargarDatos() {
+            const status = document.getElementById('status');
+            
+            // Función auxiliar para cargar cámaras
+            async function fetchCamaras() {
+                try {
+                    const res = await fetch('http://localhost:8080/camara');
+                    const data = await res.json();
+                    console.log("Cámaras recibidas:", data); // Mira esto en la consola (F12)
+                    return data;
+                } catch (e) { console.error("Error cámaras:", e); return []; }
+            }
+
+            // Función auxiliar para cargar incidencias
+            async function fetchIncidencias() {
+                try {
+                    const res = await fetch('http://localhost:8080/incidencia');
+                    const data = await res.json();
+                    console.log("Incidencias recibidas:", data); // Mira esto en la consola (F12)
+                    return data;
+                } catch (e) { console.error("Error incidencias:", e); return []; }
+            }
+
+            const [camaras, incidencias] = await Promise.all([fetchCamaras(), fetchIncidencias()]);
+
+            let nCamaras = 0;
+            let nIncidencias = 0;
+
+            // Pintar Cámaras
+            camaras.forEach(cam => {
+                if (cam.latitud && cam.longitud && cam.latitud !== 0) {
+                    L.marker([cam.latitud, cam.longitud]).addTo(map)
+                        .bindPopup(`<b>📷 Cámara:</b> ${cam.nombre}<br><img src="${cam.urlImage}" class="popup-img">`);
+                    nCamaras++;
+                }
+            });
+
+            // Pintar Incidencias
+            incidencias.forEach(inc => {
+                if (inc.latitud && inc.longitud && inc.latitud !== 0) {
+            
+                    // 1. Definimos el color (usando el objeto o el switch corregido)
+                    const colores = {
+                        "Obras": "#FFF000",
+                        "Otras incidencias": "#F000FF",
+                        "Accidente": "#FF0000",
+                        "Seguridad vial": "#00F0FF",
+                        "Vialidad invernal tramos": "#FF5500",
+                        "Puertos de montaña": "#0000FF",
+                        "Meteorológica": "#808080" // Gris un poco más oscuro para que se vea
+                    };
+                    
+                    let color = colores[inc.tipo] || "#333333"; // Negro si falla
+            
+                    // 2. Creamos el icono dinámico HTML (SVG)
+                    // El 'fill' del SVG recibe la variable 'color'
+                    const iconDinamico = L.divIcon({
+                        className: 'custom-marker', // Clase vacía para evitar bordes blancos por defecto
+                        html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36">
+                                 <path fill="${color}" stroke="#000" stroke-width="1" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                 <circle cx="12" cy="9" r="2.5" fill="#fff"/>
+                               </svg>`,
+                        iconSize: [36, 36],   // Tamaño del icono
+                        iconAnchor: [18, 36], // Punto de anclaje (la punta de abajo, mitad de ancho, alto total)
+                        popupAnchor: [0, -34] // Donde se abre el popup respecto a la punta
+                    });
+            
+                    // 3. Añadimos el marcador con el nuevo icono
+                    L.marker([inc.latitud, inc.longitud], { icon: iconDinamico }).addTo(map)
+                        .bindPopup(`
+                            <div style="min-width: 200px">
+                                <b style="color:${color}">⚠️ ${inc.tipo || 'Incidencia'}</b><br>
+                                <b>Causa:</b> ${inc.causa}<br>
+                                <b>Carretera:</b> ${inc.carretera}<br>
+                                <p>${inc.descripcion || ''}</p>
+                            </div>
+                        `);
+            
+                    nIncidencias++;
+                }
+            });
+
+            status.innerHTML = `
+                <div style="color: blue;">📷 Cámaras: <b>${nCamaras}</b></div>
+                <div style="color: red;">⚠️ Incidencias en mapa: <b>${nIncidencias}</b></div>
+                ${incidencias.length > nIncidencias ? `<div style="font-size:0.8em; color:orange;">(Hay ${incidencias.length - nIncidencias} con coord. 0)</div>` : ''}
+            `;
+        }
+
+        cargarDatos();
+    </script>
+</body>
+</html>
