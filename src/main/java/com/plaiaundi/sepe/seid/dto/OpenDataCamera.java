@@ -1,14 +1,18 @@
 package com.plaiaundi.sepe.seid.dto;
 
+import jakarta.validation.constraints.NotEmpty;
+
 public record OpenDataCamera (
-    // Atributos
+    // Atributos    
     String address,
-    String cameraId, // obligatorio
+    @NotEmpty
+    int cameraId, // obligatorio
     String cameraName,
     String kilometer,
-    String latitude,
-    String longitude,
+    double latitude,
+    double longitude,
     String road,
-    String sourceId, // obligatorio
+    @NotEmpty
+    int sourceId, // obligatorio
     String urlImage
 ) {}

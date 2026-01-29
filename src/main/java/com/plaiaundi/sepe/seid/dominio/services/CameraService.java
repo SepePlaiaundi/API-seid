@@ -1,109 +1,251 @@
 package com.plaiaundi.sepe.seid.dominio.services;
 
 import com.plaiaundi.sepe.seid.dominio.dao.CameraRepository;
+import com.plaiaundi.sepe.seid.dominio.dao.RecursoRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
+import com.plaiaundi.sepe.seid.dominio.model.Estado;
+import com.plaiaundi.sepe.seid.dominio.model.Recurso;
+import com.plaiaundi.sepe.seid.dominio.util.CameraValidator;
 import com.plaiaundi.sepe.seid.dto.OpenDataCamera;
+import com.plaiaundi.sepe.seid.dto.OpenDataCameraResponse;
+import com.plaiaundi.sepe.seid.dto.OpenDataSource;
+import com.plaiaundi.sepe.seid.infrastructure.ApiTrafico;
+import com.plaiaundi.sepe.seid.infrastructure.CoordinateNormalizer;
+import com.plaiaundi.sepe.seid.infrastructure.mappers.CameraMapper;
+import com.plaiaundi.sepe.seid.infrastructure.mappers.RecursoMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
 public class CameraService {
 
     @Autowired
+    private ApiTrafico apiTrafico;
+    @Autowired
     private CameraRepository cameraRepository;
+    @Autowired
+    private RecursoRepository recursoRepository;
+    @Autowired
+    private CameraMapper cameraMapper;
+    @Autowired
+    private RecursoMapper recursoMapper;
+    @Autowired
+    private CameraValidator cameraValidator;
+    @Autowired
+    private CoordinateNormalizer coordinateNormalizer;
+    @Autowired
+    @Qualifier("hilosCamaras")
+    private Executor executor;
 
-    // RestClient es thread-safe, puede ser estático o un bean inyectado
-    private final RestClient restClient = RestClient.create();
+    public List<Camera> getCameras() {
+        return cameraRepository.findAllByEstado(Estado.ACTIVA);
+    }
 
-    // --- AQUI ESTÁ LA MAGIA ---
-    @Async("hilosCamaras") // Esto hace que se ejecute en otro hilo
-    @Transactional // La transacción se abre dentro del hilo nuevo
-    public CompletableFuture<Camera> parseFromOpenDataCamera(OpenDataCamera camara) {
+    private List<OpenDataCamera> obtencionDeDatosCrudos() {
+        // Descarga de pagina inicial para obtencion de metadata
+        log.debug("📄 [Main Thread] Descargando página 1 (Síncrona)...");
+        OpenDataCameraResponse primeraPagina = apiTrafico.listaCamaras();
+        int totalPaginas = primeraPagina.totalPages();
+        log.debug("📚 Total páginas detectadas: {}", totalPaginas);
 
-        // 1. Validaciones (incluye la llamada lenta de red getStatusCode)
-        if (!validarDatos(camara)) {
-            // Si falla, devolvemos null envuelto en un futuro
-            return CompletableFuture.completedFuture(null);
-        }
+        // Descarga paralela de paginas de opendata
+        List<CompletableFuture<OpenDataCameraResponse>> futurasPaginas = IntStream
+                .rangeClosed(2, totalPaginas) // Abrimos un Stream de 2 al total de paginas
+                .mapToObj(pagina -> CompletableFuture.supplyAsync(() -> { // Mapeamos cada pagina como un objeto completable
+                    log.debug("⬇️ [Hilo: {}] Solicitando página {}", Thread.currentThread().getName(), pagina);
+                    return apiTrafico.listaCamaras(pagina); // Obtenemos la pagina
+                }, executor)) // Bloque de hilos que usamos, declarado en AsyncConfig
+                .toList(); // Enlistamos
 
-        Camera cam = new Camera();
-        try {
-            cam.setId(camara.cameraId());
-            cam.setCarretera(camara.road());
-            cam.setDireccion(camara.address());
-            cam.setKilometro(camara.kilometer());
-            cam.setLatitud(camara.latitude());
-            cam.setLongitud(camara.longitude());
-            cam.setNombre(camara.cameraName());
+        // Eliminacion de metadatos y concatenacion de resultados
+        return Stream.concat( // Concatenamos cada pagina mediante flujos de datos
+                        Stream.of(primeraPagina),
+                        futurasPaginas.stream().map(CompletableFuture::join) // Esperamos que se complete el future
+                )
+                .map(OpenDataCameraResponse::cameras) // Extraemos la lista de camaras de la respuesta
+                .filter(Objects::nonNull) // Filtramos valores nulos
+                .flatMap(Collection::stream) // Eliminamos el resto de datos y unimos todas las camaras en un stream
+                .toList(); // Enlistamos
+    }
 
-            String url = camara.urlImage();
-            if (url.startsWith("http://www.trafikoa.net")) {
-                url = url.replace("http://www.trafikoa.net", "https://apps.trafikoa.euskadi.eus");
+    // Prepara los dtos y cachea los recursos para que no entren en conflicto
+    private Map<Integer, Recurso> prepararYcachearRecursos(List<OpenDataCamera> todosLosDtos) {
+        Map<Integer, OpenDataSource> recursosDtoMap = apiTrafico.listaRecursos().stream() // Abre un flujo de datos con los recursos de la api
+                .collect( //Crea una coleccion con los recursos
+                    Collectors.toMap( // Mapea los recursos
+                        OpenDataSource::id, // Les asigna su id como clave
+                        Function.identity(), // Asigna el recurso como valor
+                        (existente, nuevo) -> existente) // Comprueba si se repite para no devolverlo
+                    );
+
+        Set<Integer> idsRecursosNecesarios = todosLosDtos.stream() // Abre un flujo de datos con las camaras
+                .map(OpenDataCamera::sourceId) // Mapea los id de los recuros
+                .collect(Collectors.toSet()); // Setea los id como coleccion
+
+        Map<Integer, Recurso> recursosExistentes = recursoRepository.findAllById(idsRecursosNecesarios).stream() // Abre un flujo de datos con los idNecesarios que ya esten en bd
+                .collect(
+                    Collectors.toMap(Recurso::getId, Function.identity())); // Genera una coleccion con los ids necesarios partiendo de los existentes
+        log.debug("🔍 Encontrados {} recursos existentes en la BD.", recursosExistentes.size());
+
+        // Genera los recursos necesarios
+        Map<Integer, Recurso> mapaDeRecursosFinal = new HashMap<>(recursosExistentes);
+        for (Integer idNecesario : idsRecursosNecesarios) {
+            if (!mapaDeRecursosFinal.containsKey(idNecesario)) {
+                OpenDataSource dto = recursosDtoMap.get(idNecesario);
+                if (dto != null) {
+                    Recurso nuevoRecurso = recursoMapper.toEntity(dto);
+                    mapaDeRecursosFinal.put(idNecesario, nuevoRecurso);
+                }
             }
-            cam.setUrlImage(new URL(url));
+        }
+        return mapaDeRecursosFinal;
+    }
 
-            // Guardamos en BD
-            cameraRepository.save(cam);
+    private List<Camera> validarYmapear(List<OpenDataCamera> todosLosDtos, Map<Integer, Recurso> mapaDeRecursosFinal) {
+        List<CompletableFuture<Camera>> camarasValidadasFutures = todosLosDtos.stream()
+                .map(dto -> CompletableFuture.supplyAsync(() -> {
+                    log.debug("⬇️ Revisando imagen camara {} de recurso {} ", dto.cameraId(), dto.sourceId()); // Opcional reducir logs
+                    if (cameraValidator.isValid(dto)) {
+                        log.debug("✅ Imagen valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
+                        try {
+                            Recurso recurso = mapaDeRecursosFinal.get(dto.sourceId());
+                            if (recurso != null) {
+                                // 1. Convertimos DTO a Entidad
+                                Camera entity = cameraMapper.toEntity(dto, recurso);
+                                
+                                // 2. 🔥 NUEVO: Normalizamos coordenadas (UTM a GPS) antes de devolver
+                                coordinateNormalizer.normalize(entity);
+                                
+                                return entity;
+                            }
+                        } catch (Exception e) {
+                            log.error("❌ Error mapeando cámara {}: {}", dto.cameraId(), e.getMessage());
+                        }
+                    }
+                    log.debug("❌ Imagen no valida camara {} de recurso {} ", dto.cameraId(), dto.sourceId());
+                    return null;
+                }, executor))
+                .toList();
 
-            log.info("Cámara guardada: " + cam.getId() + " - " + Thread.currentThread().getName());
+        return camarasValidadasFutures.stream()
+                .map(CompletableFuture::join)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
-            return CompletableFuture.completedFuture(cam);
+    @Transactional // Importante para que JPA gestione el contexto
+    private void persistenciaDatos(List<Camera> camarasValidadas) {
+        if (camarasValidadas.isEmpty()) return;
 
-        } catch (MalformedURLException e) {
-            return CompletableFuture.completedFuture(null);
+        // 1. Extraemos todos los IDs externos de las cámaras que llegan
+        List<Integer> idsExternos = camarasValidadas.stream()
+                .map(Camera::getId)
+                .toList();
+
+        // 2. JPA: Traemos de la DB las posibles coincidencias (Entidades GESTIONADAS)
+        List<Camera> candidatasDB = cameraRepository.findCandidatasPorIdsExternos(idsExternos);
+
+        // 3. Creamos un Mapa para búsqueda rápida: Clave "idExterno-idRecurso" -> Objeto Camera
+        Map<String, Camera> mapaExistentes = candidatasDB.stream()
+                .collect(Collectors.toMap(
+                    c -> generarClaveUnica(c), 
+                    c -> c
+                ));
+
+        List<Camera> listaFinalParaGuardar = new ArrayList<>();
+
+        // 4. Procesamos la lista que llegó de la API
+        for (Camera camaraEntrante : camarasValidadas) {
+            String claveLogica = generarClaveUnica(camaraEntrante);
+            
+            Camera camaraEnDB = mapaExistentes.get(claveLogica);
+
+            if (camaraEnDB != null) {
+                // --- CASO UPDATE ---
+                // Usamos el objeto DE LA DB (que tiene el id_model interno) y le pegamos los datos nuevos
+                actualizarDatos(camaraEnDB, camaraEntrante);
+                camaraEnDB.setNew(false);
+                camaraEnDB.setUltimaActualizacion(LocalDateTime.now());
+                
+                listaFinalParaGuardar.add(camaraEnDB);
+            } else {
+                // --- CASO INSERT ---
+                // Es totalmente nueva, no existe esa combinación ID + Recurso
+                camaraEntrante.setNew(true);
+                camaraEntrante.setPrimeraInsercion(LocalDateTime.now());
+                camaraEntrante.setUltimaActualizacion(LocalDateTime.now());
+                
+                listaFinalParaGuardar.add(camaraEntrante);
+            }
+        }
+
+        // 5. Guardamos todo en lote. JPA sabe cuáles son updates y cuáles inserts
+        if (!listaFinalParaGuardar.isEmpty()) {
+            cameraRepository.saveAll(listaFinalParaGuardar);
+            log.debug("✅ Persistencia finalizada: {} cámaras procesadas.", listaFinalParaGuardar.size());
         }
     }
 
-    // --- Tus métodos privados siguen igual (se ejecutan dentro del hilo async) ---
-
-    private boolean validarDatos(OpenDataCamera camara) {
-        // Validamos nulos rápido
-        if (camara.cameraId() == null || camara.latitude() == null ||
-                camara.longitude() == null || camara.cameraName() == null) {
-            return false;
-        }
-        // Esta es la parte lenta, ahora se ejecuta en paralelo
-        return urlCamaraValida(camara);
+    // Helper para generar la clave compuesta consistente
+    private String generarClaveUnica(Camera c) {
+        // Si el recurso es null, maneja la excepción o usa "0"
+        int idRecurso = (c.getRecurso() != null) ? c.getRecurso().getId() : 0;
+        return c.getId() + "_" + idRecurso;
     }
 
-    private boolean urlCamaraValida(OpenDataCamera camara) {
-        String url = camara.urlImage();
-        if (url == null) return false;
-
-        if (url.startsWith("http://www.trafikoa.net")) {
-            url = url.replace("http://www.trafikoa.net", "https://apps.trafikoa.euskadi.eus");
-        }
-
-        try { new URL(url); } catch (MalformedURLException e) { return false; }
-
-        return urlIsOk(url);
+    // Helper para copiar propiedades (sin tocar IDs ni fechas de creación)
+    private void actualizarDatos(Camera destino, Camera origen) {
+        destino.setNombre(origen.getNombre());
+        destino.setDireccion(origen.getDireccion());
+        destino.setKilometro(origen.getKilometro());
+        destino.setLatitud(origen.getLatitud());
+        destino.setLongitud(origen.getLongitud());
+        destino.setCarretera(origen.getCarretera());
+        destino.setUrlImage(origen.getUrlImage());
+        // NO tocamos 'id_model' (PK interna)
+        // NO tocamos 'primeraInsercion'
     }
 
-    private boolean urlIsOk(String url) {
-        int code = getStatusCode(url);
-        return code > 199 && code < 299;
-    }
+    @Cacheable("camerasAPI")
+    @Retryable(maxRetries = 3)
+    @Transactional
+    public List<Camera> syncAllCamerasFromAPI() {
+        // --- FASE 1: OBTENCIÓN DE DATOS CRUDOS --- (Asincrona)
+        log.info("📦 INICIANDO FASE 1. Descarga de datos de la API de OpenData");
+        List<OpenDataCamera> todosLosDtos = obtencionDeDatosCrudos();
+        log.info("✅ FASE 1 COMPLETADA. Total cámaras crudas descargadas: {}", todosLosDtos.size());
 
-    private int getStatusCode(String url) {
-        try {
-            // RestClient síncrono, pero como todo el método es Async, no bloquea al usuario
-            ResponseEntity<Void> response = restClient.head()
-                    .uri(url)
-                    .retrieve()
-                    .toBodilessEntity();
-            return response.getStatusCode().value();
-        } catch (Exception e) {
-            return 500;
-        }
+        // --- FASE 2: PREPARACIÓN DE RECURSOS --- (Sincrona)
+        log.info("🛠️ INICIO FASE 2: Preparando y cacheadando recursos");
+        Map<Integer, Recurso> mapaDeRecursosFinal = prepararYcachearRecursos(todosLosDtos);
+        log.info("✅ FASE 2 COMPLETADA. Mapa de recursos final contiene {} entradas.", mapaDeRecursosFinal.size());
+
+        // --- FASE 3: VALIDACIÓN Y MAPEO EN PARALELO --- 
+        log.info("⚡ INICIO FASE 3: Validando y Mapeando en paralelo...");
+        List<Camera> camarasValidadas = validarYmapear(todosLosDtos, mapaDeRecursosFinal);
+        log.info("✅ FASE 3: Camaras validadas y mapeadas");
+
+        // --- FASE 4: PERSISTENCIA ---
+        log.info("💾 INICIO FASE 4: Persistiendo cámaras...");
+        persistenciaDatos(camarasValidadas);
+        log.info("✅ FASE 4 COMPLETADA: Cámaras guardadas con exito");
+
+        log.info("🏁 FIN: Sincronización de cámaras. Total cámaras procesadas: {}", camarasValidadas.size());
+        return camarasValidadas;
     }
 }
