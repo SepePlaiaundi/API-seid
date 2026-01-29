@@ -17,6 +17,10 @@ public class User {
 
     private String password;
 
+    private String rol;
+
+    private String avatar;
+
     public Long getId() {
         return id;
     }
@@ -47,5 +51,21 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 }
