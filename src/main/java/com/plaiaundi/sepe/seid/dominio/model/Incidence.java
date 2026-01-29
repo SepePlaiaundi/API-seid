@@ -18,7 +18,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
+
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -26,7 +26,6 @@ import lombok.NoArgsConstructor;
         @UniqueConstraint(name = "uk_incidencia_id_resource", columnNames = { "id", "recurso_id" })
 })
 @NoArgsConstructor
-@AllArgsConstructor
 public class Incidence {
 
     @Id
