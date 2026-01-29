@@ -1,5 +1,6 @@
 package com.plaiaundi.sepe.seid.dominio.dao;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,10 +17,12 @@ import com.plaiaundi.sepe.seid.dominio.model.Incidence;
 public interface IncidenceRepository extends JpaRepository<Incidence, Integer> {
 
     List<Incidence> findAllByEstado(Estado activa);
-    
+
     @Query("SELECT i FROM Incidence i WHERE i.id IN :ids")
     List<Incidence> findCandidatasPorIdsExternos(@Param("ids") List<Integer> idsExternos);
 
     List<Incidence> findAllByTipo(String tipo);
+
+    List<Incidence> findAllByEstadoAndUltimaActualizacionAfter(Estado estado, LocalDateTime since);
 
 }

@@ -78,6 +78,10 @@ public class IncidenceService {
         return incidenceRepository.findAllByEstado(Estado.ACTIVA);
     }
 
+    public List<Incidence> getIncidences(LocalDateTime since) {
+        return incidenceRepository.findAllByEstadoAndUltimaActualizacionAfter(Estado.ACTIVA, since);
+    }
+
     private List<OpenDataIncidence> obtencionDeDatosCrudos() {
         // Descarga de pagina inicial para obtencion de metadata
         log.debug("📄 [Main Thread] Descargando página 1 (Síncrona)...");

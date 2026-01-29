@@ -4,4 +4,5 @@ public enum Estado {
     ACTIVA,
     ELIMINADA,
     SINCRONIZANDO,
+    DESHABILITADA,
 }

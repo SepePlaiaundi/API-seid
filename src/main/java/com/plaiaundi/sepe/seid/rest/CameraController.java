@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.plaiaundi.sepe.seid.dominio.model.Estado;
 import com.plaiaundi.sepe.seid.dominio.model.Camera;
 
 @RestController
@@ -27,6 +28,18 @@ public class CameraController {
     public List<Camera> listaDeCamaras() {
         log.info("GET /camara");
         return cameraService.getCameras();
+    }
+
+    @GetMapping(value = "/mobile", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Camera> listaCamarasMobile() {
+        log.info("GET /camara/mobile");
+        return cameraService.getCamerasByEstado(Estado.ACTIVA);
+    }
+
+    @GetMapping(value = "/admin", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Camera> listaCamarasAdmin() {
+        log.info("GET /camara/admin");
+        return cameraService.getAllCameras();
     }
 
     @GetMapping(value = "/tunel", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -85,5 +98,13 @@ public class CameraController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PatchMapping(value = "/{id}/status")
+    public ResponseEntity<Camera> toggleStatus(@PathVariable Integer id) {
+        log.info("PATCH /camara/{}/status", id);
+        return cameraService.toggleStatus(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

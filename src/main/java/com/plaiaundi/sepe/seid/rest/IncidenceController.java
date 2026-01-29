@@ -1,5 +1,6 @@
 package com.plaiaundi.sepe.seid.rest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.plaiaundi.sepe.seid.dominio.services.IncidenceService;
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
+import org.springframework.format.annotation.DateTimeFormat;
 import com.plaiaundi.sepe.seid.dominio.model.Response;
 
 @RestController
@@ -26,8 +28,12 @@ public class IncidenceController {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Incidence> listaDeIncidencias() {
+    public List<Incidence> listaDeIncidencias(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
         log.info("GET /incidencia");
+        if (since != null) {
+            return incidenceService.getIncidences(since);
+        }
         return incidenceService.getIncidences();
     }
 
@@ -45,8 +51,17 @@ public class IncidenceController {
     }
 
     @GetMapping(value = "/{tipo}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Incidence> getIncidencesByTipo(@PathVariable String tipo) {
-        return incidenceService.getIncidences(tipo);
+    public List<Incidence> getIncidenciasByTipo(
+            @PathVariable String tipo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+        log.info("GET /incidencia/tipo/{}", tipo);
+        List<Incidence> results = incidenceService.getIncidences(tipo);
+        if (since != null) {
+            return results.stream()
+                    .filter(i -> i.getUltimaActualizacion() != null && i.getUltimaActualizacion().isAfter(since))
+                    .toList();
+        }
+        return results;
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

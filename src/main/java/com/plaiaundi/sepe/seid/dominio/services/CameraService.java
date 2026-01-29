@@ -70,6 +70,14 @@ public class CameraService {
         return cameraRepository.findById(id);
     }
 
+    public List<Camera> getCamerasByEstado(Estado estado) {
+        return cameraRepository.findAllByEstado(estado);
+    }
+
+    public List<Camera> getAllCameras() {
+        return cameraRepository.findAll();
+    }
+
     public Camera save(Camera camera) {
         return cameraRepository.save(camera);
     }
@@ -78,6 +86,17 @@ public class CameraService {
         cameraRepository.findById(id).ifPresent(opt -> {
             opt.setEstado(Estado.ELIMINADA);
             cameraRepository.save(opt);
+        });
+    }
+
+    public Optional<Camera> toggleStatus(Integer id) {
+        return cameraRepository.findById(id).map(camera -> {
+            if (camera.getEstado() == Estado.ACTIVA) {
+                camera.setEstado(Estado.DESHABILITADA);
+            } else if (camera.getEstado() == Estado.DESHABILITADA) {
+                camera.setEstado(Estado.ACTIVA);
+            }
+            return cameraRepository.save(camera);
         });
     }
 
