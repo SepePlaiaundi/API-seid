@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -290,6 +291,17 @@ public class IncidenceService {
 
         log.info("🏁 FIN: Sincronización de incidencias. Total incidencias procesadas: {}", incidencesValidadas.size());
         return incidencesValidadas;
+    }
+
+    public Optional<Incidence> getById(Integer id) {
+        return incidenceRepository.findById(id);
+    }
+
+    public void delete(Integer id) {
+        incidenceRepository.findById(id).ifPresent(opt -> {
+            opt.setEstado(Estado.ELIMINADA);
+            incidenceRepository.save(opt);
+        });
     }
 
     public List<Incidence> getIncidences(String tipo) {

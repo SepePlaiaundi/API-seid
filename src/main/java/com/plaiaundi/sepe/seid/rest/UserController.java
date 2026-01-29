@@ -36,22 +36,34 @@ public class UserController {
         this.jwtService = jwtService;
     }
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> register(@RequestBody UserRegisterRequest request) {
         userService.register(request);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody UserLoginRequest request) {
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> registerMultipart(@ModelAttribute UserRegisterRequest request) {
+        userService.register(request);
+        return ResponseEntity.ok().build();
+    }
 
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LoginResponse> login(@RequestBody UserLoginRequest request) {
+        return processLogin(request);
+    }
+
+    @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<LoginResponse> loginMultipart(@ModelAttribute UserLoginRequest request) {
+        return processLogin(request);
+    }
+
+    private ResponseEntity<LoginResponse> processLogin(UserLoginRequest request) {
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.email(),
-                            request.password()
-                    )
-            );
+                            request.password()));
 
             String token = jwtService.generateToken(request.email());
 
@@ -72,9 +84,17 @@ public class UserController {
                 .toList();
     }
 
-    @PutMapping("/update")
+    @PutMapping(value = "/update", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> update(@RequestBody UserUpdateRequest request) {
+        return processUpdate(request);
+    }
 
+    @PutMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> updateMultipart(@ModelAttribute UserUpdateRequest request) {
+        return processUpdate(request);
+    }
+
+    private ResponseEntity<Void> processUpdate(UserUpdateRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -84,4 +104,19 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<User> getById(@PathVariable Long id) {
+        return userService.getById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (userService.getById(id).isPresent()) {
+            userService.delete(id);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
 }

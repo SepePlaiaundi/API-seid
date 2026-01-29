@@ -1,5 +1,7 @@
 package com.plaiaundi.sepe.seid.dominio.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -15,6 +17,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @JsonIgnore
     private String password;
 
     private String rol;

@@ -66,6 +66,21 @@ public class CameraService {
         return cameraRepository.findAllByEstado(Estado.ACTIVA);
     }
 
+    public Optional<Camera> getById(Integer id) {
+        return cameraRepository.findById(id);
+    }
+
+    public Camera save(Camera camera) {
+        return cameraRepository.save(camera);
+    }
+
+    public void delete(Integer id) {
+        cameraRepository.findById(id).ifPresent(opt -> {
+            opt.setEstado(Estado.ELIMINADA);
+            cameraRepository.save(opt);
+        });
+    }
+
     private List<OpenDataCamera> obtencionDeDatosCrudos() {
         // Descarga de pagina inicial para obtencion de metadata
         log.debug("📄 [Main Thread] Descargando página 1 (Síncrona)...");
