@@ -1,5 +1,6 @@
 package com.plaiaundi.sepe.seid.rest;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,11 +33,11 @@ public class IncidenceController {
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
         log.info("GET /incidencia");
-        if (day != null && month != null && year != null) {
-            LocalDateTime since = LocalDateTime.of(year, month, day, 0, 0, 0);
-            return incidenceService.getIncidences(since);
-        }
-        return incidenceService.getIncidences();
+        LocalDate date = (day != null && month != null && year != null)
+                ? LocalDate.of(year, month, day)
+                : LocalDate.now();
+        LocalDateTime since = date.atStartOfDay();
+        return incidenceService.getIncidences(since);
     }
 
     @GetMapping(value = "/tunel", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -60,13 +61,13 @@ public class IncidenceController {
             @RequestParam(required = false) Integer year) {
         log.info("GET /incidencia/tipo/{}", tipo);
         List<Incidence> results = incidenceService.getIncidences(tipo);
-        if (day != null && month != null && year != null) {
-            LocalDateTime since = LocalDateTime.of(year, month, day, 0, 0, 0);
-            return results.stream()
-                    .filter(i -> i.getUltimaActualizacion() != null && i.getUltimaActualizacion().isAfter(since))
-                    .toList();
-        }
-        return results;
+        LocalDate date = (day != null && month != null && year != null)
+                ? LocalDate.of(year, month, day)
+                : LocalDate.now();
+        LocalDateTime since = date.atStartOfDay();
+        return results.stream()
+                .filter(i -> i.getUltimaActualizacion() != null && i.getUltimaActualizacion().isAfter(since))
+                .toList();
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

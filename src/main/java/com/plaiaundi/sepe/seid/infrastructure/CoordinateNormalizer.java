@@ -33,12 +33,16 @@ public class CoordinateNormalizer {
     public void normalize(Incidence incidence) {
         double[] coord;
         try {
-            coord = normalize(incidence.getLatitud(), incidence.getLongitud());
-
+            if (incidence.getRecurso() != null && incidence.getRecurso().getId() == 2) { // Caso de bizkaia que vienen
+                                                                                         // invertidos.
+                coord = normalize(incidence.getLongitud(), incidence.getLatitud());
+            } else {
+                coord = normalize(incidence.getLatitud(), incidence.getLongitud());
+            }
             incidence.setLatitud(coord[0]);
             incidence.setLongitud(coord[1]);
         } catch (Exception e) {
-            incidence = null;
+            log.error("❌ Error normalizando coordenadas de incidencia: {}", e.getMessage());
         }
 
     }
@@ -46,12 +50,16 @@ public class CoordinateNormalizer {
     public void normalize(Camera camera) {
         double[] coord;
         try {
-            coord = normalize(camera.getLatitud(), camera.getLongitud());
-
+            if (camera.getRecurso() != null && camera.getRecurso().getId() == 2) { // Caso de bizkaia que vienen
+                                                                                   // invertidos.
+                coord = normalize(camera.getLongitud(), camera.getLatitud());
+            } else {
+                coord = normalize(camera.getLatitud(), camera.getLongitud());
+            }
             camera.setLatitud(coord[0]);
             camera.setLongitud(coord[1]);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("❌ Error normalizando coordenadas de cámara: {}", e.getMessage());
         }
 
     }
