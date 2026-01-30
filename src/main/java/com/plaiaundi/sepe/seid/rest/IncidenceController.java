@@ -11,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.plaiaundi.sepe.seid.dominio.model.Incidence;
-import org.springframework.format.annotation.DateTimeFormat;
 import com.plaiaundi.sepe.seid.dominio.model.Response;
 
 @RestController
@@ -29,9 +28,12 @@ public class IncidenceController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Incidence> listaDeIncidencias(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+            @RequestParam(required = false) Integer day,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
         log.info("GET /incidencia");
-        if (since != null) {
+        if (day != null && month != null && year != null) {
+            LocalDateTime since = LocalDateTime.of(year, month, day, 0, 0, 0);
             return incidenceService.getIncidences(since);
         }
         return incidenceService.getIncidences();
@@ -53,10 +55,13 @@ public class IncidenceController {
     @GetMapping(value = "/{tipo}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Incidence> getIncidenciasByTipo(
             @PathVariable String tipo,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+            @RequestParam(required = false) Integer day,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
         log.info("GET /incidencia/tipo/{}", tipo);
         List<Incidence> results = incidenceService.getIncidences(tipo);
-        if (since != null) {
+        if (day != null && month != null && year != null) {
+            LocalDateTime since = LocalDateTime.of(year, month, day, 0, 0, 0);
             return results.stream()
                     .filter(i -> i.getUltimaActualizacion() != null && i.getUltimaActualizacion().isAfter(since))
                     .toList();
