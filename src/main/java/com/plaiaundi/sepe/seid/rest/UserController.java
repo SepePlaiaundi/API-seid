@@ -6,6 +6,7 @@ import com.plaiaundi.sepe.seid.dominio.services.UserService;
 import com.plaiaundi.sepe.seid.dto.*;
 import com.plaiaundi.sepe.seid.infrastructure.security.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -93,9 +94,43 @@ public class UserController {
                 .map(user -> new UserResponse(
                         user.getEmail(),
                         user.getNombreCompleto(),
-                        user.getRol().getName() // Enviamos el código del rol (ej: "ADMIN")
-                ))
+                        user.getRol().getName(),
+                        user.getAvatar()))
                 .toList();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMyProfile(Authentication authentication) {
+        String email = authentication.getName();
+        return userRepository.findByEmail(email)
+                .map(user -> new UserResponse(
+                        user.getEmail(),
+                        user.getNombreCompleto(),
+                        user.getRol().getName(),
+                        user.getAvatar()))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/profile/update")
+    public ResponseEntity<Void> updateMyProfile(@RequestBody UserProfileUpdateRequest request,
+            Authentication authentication) {
+        try {
+            // Aseguramos que el email del request coincida con el usuario autenticado
+            // o simplemente usamos el email del token para buscar el usuario.
+            // En este caso, usamos el del token para mayor seguridad.
+            String authenticatedEmail = authentication.getName();
+            UserProfileUpdateRequest safeRequest = new UserProfileUpdateRequest(
+                    authenticatedEmail,
+                    request.nombreCompleto(),
+                    request.password(),
+                    request.avatar());
+
+            userService.updateProfile(safeRequest);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping(value = "/update", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -109,7 +144,7 @@ public class UserController {
     }
 
     private ResponseEntity<Void> processUpdate(UserUpdateRequest request) { // Delegamos la lógica al servicio para
-                                                                            // manejar la búsqueda del rol
+        // manejar la búsqueda del rol
         try {
             userService.updateUser(request);
             return ResponseEntity.ok().build();

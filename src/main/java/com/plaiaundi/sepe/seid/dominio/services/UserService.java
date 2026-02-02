@@ -4,6 +4,7 @@ import com.plaiaundi.sepe.seid.dominio.dao.RoleRepository;
 import com.plaiaundi.sepe.seid.dominio.dao.UserRepository;
 import com.plaiaundi.sepe.seid.dominio.model.Role;
 import com.plaiaundi.sepe.seid.dominio.model.User;
+import com.plaiaundi.sepe.seid.dto.UserProfileUpdateRequest;
 import com.plaiaundi.sepe.seid.dto.UserRegisterRequest;
 import com.plaiaundi.sepe.seid.dto.UserUpdateRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -77,6 +78,20 @@ public class UserService {
             Role roleEntity = roleRepository.findByName(request.rol())
                     .orElseThrow(() -> new RuntimeException("Rol no válido"));
             user.setRol(roleEntity);
+        }
+
+        userRepository.save(user);
+    }
+
+    public void updateProfile(UserProfileUpdateRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setNombreCompleto(request.nombreCompleto());
+        user.setAvatar(request.avatar());
+
+        if (request.password() != null && !request.password().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.password()));
         }
 
         userRepository.save(user);
