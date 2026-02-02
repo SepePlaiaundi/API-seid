@@ -218,4 +218,38 @@ class CameraServiceTest {
         // Then
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void shouldChangeVisibility() {
+        // Given
+        int id = 1;
+        Camera camera = new Camera();
+        camera.setId(id);
+        camera.setEstado(Estado.ACTIVA);
+        when(cameraRepository.findById(id)).thenReturn(java.util.Optional.of(camera));
+
+        // When
+        cameraService.changeVisibility(id);
+
+        // Then
+        assertEquals(Estado.INACTIVA, camera.getEstado());
+        verify(cameraRepository).save(camera);
+    }
+
+    @Test
+    void shouldHandleNullEstadoBySettingToActiva() {
+        // Given
+        int id = 1;
+        Camera camera = new Camera();
+        camera.setId(id);
+        camera.setEstado(null); // Explicitly null
+        when(cameraRepository.findById(id)).thenReturn(java.util.Optional.of(camera));
+
+        // When
+        cameraService.changeVisibility(id);
+
+        // Then
+        assertEquals(Estado.ACTIVA, camera.getEstado());
+        verify(cameraRepository).save(camera);
+    }
 }

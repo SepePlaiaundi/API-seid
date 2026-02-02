@@ -92,8 +92,8 @@ public class CameraService {
     public Optional<Camera> toggleStatus(Integer id) {
         return cameraRepository.findById(id).map(camera -> {
             if (camera.getEstado() == Estado.ACTIVA) {
-                camera.setEstado(Estado.DESHABILITADA);
-            } else if (camera.getEstado() == Estado.DESHABILITADA) {
+                camera.setEstado(Estado.INACTIVA);
+            } else if (camera.getEstado() == Estado.INACTIVA) {
                 camera.setEstado(Estado.ACTIVA);
             }
             return cameraRepository.save(camera);
@@ -311,5 +311,22 @@ public class CameraService {
 
         log.info("🏁 FIN: Sincronización de cámaras. Total cámaras procesadas: {}", camarasValidadas.size());
         return camarasValidadas;
+    }
+
+    public void changeVisibility(int id) {
+        Camera cam = cameraRepository.findById(id).get();
+        if (cam.getEstado() == Estado.ACTIVA) {
+            cam.setEstado(Estado.INACTIVA);
+        } else {
+            cam.setEstado(Estado.ACTIVA);
+        }
+        cameraRepository.save(cam);
+    }
+
+    public void setVisibility(int id, Estado estado) {
+        cameraRepository.findById(id).ifPresent(opt -> {
+            opt.setEstado(estado);
+            cameraRepository.save(opt);
+        });
     }
 }

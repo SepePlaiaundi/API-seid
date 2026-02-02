@@ -107,4 +107,24 @@ public class CameraController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PatchMapping(value = "/{id}/visibility", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> toggleVisibility(@PathVariable Integer id) {
+        log.info("PATCH /camara/{}/visibility", id);
+        if (cameraService.getById(id).isPresent()) {
+            cameraService.changeVisibility(id);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PatchMapping(value = "/{id}/{estado}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> toggleVisibility(@PathVariable Integer id, @PathVariable Estado estado) {
+        log.info("PATCH /camara/{}/{estado}", id, estado);
+        if (cameraService.getById(id).isPresent()) {
+            cameraService.setVisibility(id, estado);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
 }

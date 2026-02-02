@@ -6,6 +6,7 @@ import com.plaiaundi.sepe.seid.dominio.services.UserService;
 import com.plaiaundi.sepe.seid.dto.*;
 import com.plaiaundi.sepe.seid.infrastructure.security.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

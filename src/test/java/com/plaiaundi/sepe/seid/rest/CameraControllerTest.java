@@ -49,4 +49,15 @@ class CameraControllerTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void testToggleVisibility() throws Exception {
+        int cameraId = 1;
+        when(cameraService.changeVisibility(cameraId)).thenReturn(true);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .patch("/camara/" + cameraId + "/visibility")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
 }
