@@ -37,7 +37,7 @@ public class Incidence {
     @Column(name = "id")
     private int id;
 
-    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @ManyToOne(cascade = { CascadeType.MERGE })
     @JoinColumn(name = "recurso_id")
     private Recurso recurso;
 
