@@ -1,3 +1,7 @@
 package com.plaiaundi.sepe.seid.dto;
 
-public record UserUpdateRequest(String email, String nombreCompleto) {}
+public record UserUpdateRequest(
+        String email,
+        String nombreCompleto,
+        String rol
+) {}
