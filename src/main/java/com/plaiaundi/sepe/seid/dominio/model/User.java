@@ -26,6 +26,7 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role rol;
 
+    @Column(columnDefinition = "TEXT")
     private String avatar;
 
     // Getters y Setters actualizados
