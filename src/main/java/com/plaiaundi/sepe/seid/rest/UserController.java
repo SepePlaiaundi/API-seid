@@ -20,6 +20,8 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private UserRepository userRepository;
     private final UserService userService;
@@ -35,6 +37,7 @@ public class UserController {
     // --- NUEVO ENDPOINT PARA OBTENER ROLES ---
     @GetMapping("/roles")
     public ResponseEntity<List<RoleResponse>> getRoles() {
+        log.info("GET /users/roles");
         List<RoleResponse> roles = userService.getAllRoles().stream()
                 // Asegúrate que role.getName() y role.getDescription() existan en tu entidad
                 // Role
@@ -46,6 +49,7 @@ public class UserController {
 
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> register(@RequestBody UserRegisterRequest request) {
+        log.info("POST /users/register - Email: {}", request.email());
         try {
             userService.register(request);
             return ResponseEntity.ok().build();
@@ -56,17 +60,20 @@ public class UserController {
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> registerMultipart(@ModelAttribute UserRegisterRequest request) {
+        log.info("POST /users/register (multipart) - Email: {}", request.email());
         userService.register(request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LoginResponse> login(@RequestBody UserLoginRequest request) {
+        log.info("POST /users/login - Email: {}", request.email());
         return processLogin(request);
     }
 
     @PostMapping(value = "/login", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<LoginResponse> loginMultipart(@ModelAttribute UserLoginRequest request) {
+        log.info("POST /users/login (multipart) - Email: {}", request.email());
         return processLogin(request);
     }
 
@@ -90,6 +97,7 @@ public class UserController {
 
     @GetMapping("/all")
     public List<UserResponse> list() {
+        log.info("GET /users/all");
         return userRepository.findAll().stream()
                 .map(user -> new UserResponse(
                         user.getEmail(),
@@ -101,11 +109,13 @@ public class UserController {
 
     @PutMapping(value = "/update", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> update(@RequestBody UserUpdateRequest request) {
+        log.info("PUT /users/update - Email: {}", request.email());
         return processUpdate(request);
     }
 
     @PutMapping(value = "/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> updateMultipart(@ModelAttribute UserUpdateRequest request) {
+        log.info("PUT /users/update (multipart) - Email: {}", request.email());
         return processUpdate(request);
     }
 
@@ -121,6 +131,7 @@ public class UserController {
 
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<User> getById(@PathVariable Long id) {
+        log.info("GET /users/{}", id);
         return userService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -128,6 +139,7 @@ public class UserController {
 
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("DELETE /users/{}", id);
         if (userService.getById(id).isPresent()) {
             userService.delete(id);
             return ResponseEntity.ok().build();

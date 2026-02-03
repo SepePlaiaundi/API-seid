@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/emails")
 public class EmailController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EmailController.class);
+
     private final EmailService emailService;
 
     public EmailController(EmailService emailService) {
@@ -17,8 +19,8 @@ public class EmailController {
     @PostMapping("/welcome")
     public ResponseEntity<Void> sendWelcomeEmail(
             @RequestParam String email,
-            @RequestParam(defaultValue = "Usuario") String nombre
-    ) {
+            @RequestParam(defaultValue = "Usuario") String nombre) {
+        log.info("POST /emails/welcome - Email: {}", email);
         emailService.sendWelcomeEmail(email, nombre);
         return ResponseEntity.ok().build();
     }

@@ -57,6 +57,7 @@ public class CameraController {
 
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Camera> getById(@PathVariable Integer id) {
+        log.info("GET /camara/{}", id);
         return cameraService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -64,21 +65,25 @@ public class CameraController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Camera create(@RequestBody Camera camera) {
+        log.info("POST /camara");
         return cameraService.save(camera);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Camera createMultipart(@ModelAttribute Camera camera) {
+        log.info("POST /camara (multipart)");
         return cameraService.save(camera);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Camera> update(@PathVariable Integer id, @RequestBody Camera camera) {
+        log.info("PUT /camara/{}", id);
         return processUpdate(id, camera);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Camera> updateMultipart(@PathVariable Integer id, @ModelAttribute Camera camera) {
+        log.info("PUT /camara/{} (multipart)", id);
         return processUpdate(id, camera);
     }
 
@@ -93,6 +98,7 @@ public class CameraController {
 
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        log.info("DELETE /camara/{}", id);
         if (cameraService.getById(id).isPresent()) {
             cameraService.delete(id);
             return ResponseEntity.ok().build();
