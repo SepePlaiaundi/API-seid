@@ -85,7 +85,40 @@ public class CameraService {
                     .ifPresent(camera::setRecurso);
         }
 
+        if (camera.getId() == null) {
+            camera.setUltimaActualizacion(LocalDateTime.now());
+        }
+
         return cameraRepository.save(camera);
+    }
+
+    public Camera update(Integer id, Camera cameraDetails) {
+        return cameraRepository.findById(id).map(existingCamera -> {
+            // Actualizar campos permitidos
+            existingCamera.setNombre(cameraDetails.getNombre());
+            existingCamera.setDireccion(cameraDetails.getDireccion());
+            existingCamera.setKilometro(cameraDetails.getKilometro());
+            existingCamera.setLatitud(cameraDetails.getLatitud());
+            existingCamera.setLongitud(cameraDetails.getLongitud());
+            existingCamera.setCarretera(cameraDetails.getCarretera());
+            existingCamera.setUrlImage(cameraDetails.getUrlImage());
+
+            // Si nos pasan un recursoId nuevo, lo actualizamos
+            if (cameraDetails.getRecurso() != null) {
+                recursoRepository.findById(cameraDetails.getRecurso().getId())
+                        .ifPresent(existingCamera::setRecurso);
+            }
+
+            // Gestion de fechas
+            existingCamera.setUltimaActualizacion(LocalDateTime.now());
+
+            // Estado (opcional, si viene en el body)
+            if (cameraDetails.getEstado() != null) {
+                existingCamera.setEstado(cameraDetails.getEstado());
+            }
+
+            return cameraRepository.save(existingCamera);
+        }).orElseThrow(() -> new RuntimeException("Camera not found with id " + id));
     }
 
     public void delete(Integer id) {

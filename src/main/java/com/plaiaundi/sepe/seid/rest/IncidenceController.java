@@ -103,12 +103,18 @@ public class IncidenceController {
     }
 
     private ResponseEntity<Response> processUpdate(Integer id, Incidence incidencia) {
-        return incidenceService.getById(id)
-                .map(existing -> {
-                    incidencia.setId(id);
-                    return ResponseEntity.ok(incidenceService.save(incidencia));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        Response response = incidenceService.update(id, incidencia);
+        if (response.getMensaje().contains("Error")) {
+            // Puedes mejorar esto devolviendo 404 si es 'not found' o 400/500 segun el
+            // error
+            // Por simplificar, si el mensaje indica error, devolvemos bad request o not
+            // found
+            if (response.getMensaje().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().body(response);
+        }
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping(value = "/{id}")
