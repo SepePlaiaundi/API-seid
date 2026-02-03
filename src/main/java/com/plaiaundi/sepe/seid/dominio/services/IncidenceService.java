@@ -373,6 +373,11 @@ public class IncidenceService {
             }
 
             incidencia = incidenceValidator.validar(incidencia);
+
+            if (incidencia.getId() == null) {
+                incidencia.setUltimaActualizacion(LocalDateTime.now());
+            }
+
             incidenceRepository.save(incidencia);
             respuesta.setMensaje("Incidencia guardada correctamente");
         } catch (Exception e) {
@@ -380,6 +385,48 @@ public class IncidenceService {
         } finally {
             return respuesta;
         }
+    }
+
+    public Response update(Integer id, Incidence incidenceDetails) {
+        Response response = new Response();
+        try {
+            Incidence existingIncidence = incidenceRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Incidence not found"));
+
+            // Actualizar campos
+            existingIncidence.setProvincia(incidenceDetails.getProvincia());
+            existingIncidence.setCausa(incidenceDetails.getCausa());
+            existingIncidence.setFecIni(incidenceDetails.getFecIni());
+            existingIncidence.setCarretera(incidenceDetails.getCarretera());
+            existingIncidence.setDireccion(incidenceDetails.getDireccion());
+            existingIncidence.setLatitud(incidenceDetails.getLatitud());
+            existingIncidence.setLongitud(incidenceDetails.getLongitud());
+            existingIncidence.setCiudad(incidenceDetails.getCiudad());
+            existingIncidence.setFecFin(incidenceDetails.getFecFin());
+            existingIncidence.setNivel(incidenceDetails.getNivel());
+            existingIncidence.setTipo(incidenceDetails.getTipo());
+            existingIncidence.setDescripcion(incidenceDetails.getDescripcion());
+
+            // Recurso
+            if (incidenceDetails.getRecurso() != null) {
+                recursoRepository.findById(incidenceDetails.getRecurso().getId())
+                        .ifPresent(existingIncidence::setRecurso);
+            }
+
+            // Estado
+            if (incidenceDetails.getEstado() != null) {
+                existingIncidence.setEstado(incidenceDetails.getEstado());
+            }
+
+            // Fechas
+            existingIncidence.setUltimaActualizacion(LocalDateTime.now());
+
+            incidenceRepository.save(existingIncidence);
+            response.setMensaje("Incidencia actualizada correctamente");
+        } catch (Exception e) {
+            response.setMensaje("Error al actualizar la incidencia: " + e.getMessage());
+        }
+        return response;
     }
 
 }

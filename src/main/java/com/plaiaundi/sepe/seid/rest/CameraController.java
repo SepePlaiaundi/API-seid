@@ -88,12 +88,11 @@ public class CameraController {
     }
 
     private ResponseEntity<Camera> processUpdate(Integer id, Camera camera) {
-        return cameraService.getById(id)
-                .map(existing -> {
-                    camera.setId(id);
-                    return ResponseEntity.ok(cameraService.save(camera));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(cameraService.update(id, camera));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping(value = "/{id}")
