@@ -9,24 +9,31 @@ import com.plaiaundi.sepe.seid.dto.UserRegisterRequest;
 import com.plaiaundi.sepe.seid.dto.UserUpdateRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
-import java.util.List;
-
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository; // Inyectamos el repo de roles
-    private final PasswordEncoder passwordEncoder;
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService; // 1. Añadir el servicio de email
+
+    // 2. Inyectarlo en el constructor
+    public UserService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
-
+        this.emailService = emailService;
     }
 
     public void register(UserRegisterRequest request) {
@@ -39,65 +46,56 @@ public class UserService {
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
 
-        // Buscamos el rol en la BD. Si no envían nada, asignamos USER por defecto.
         String roleName = (request.rol() != null && !request.rol().isEmpty()) ? request.rol() : "USER";
-
         Role roleEntity = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Error: Rol no encontrado."));
 
         user.setRol(roleEntity);
 
+        // Guardamos el usuario
         userRepository.save(user);
+
+        // Si bypassEmail es true, no enviamos el correo
+        if (request.bypassEmail() != null && request.bypassEmail()) {
+            logger.info("Registro de usuario: bypassEmail activo para {}, saltando correo de bienvenida.", user.getEmail());
+            return;
+        }
+
+        try {
+            emailService.sendWelcomeEmail(user.getEmail(), user.getNombreCompleto());
+        } catch (Exception e) {
+            logger.error("Usuario registrado, pero falló el envío del email: " + e.getMessage());
+        }
     }
 
-    public List<User> getAll() {
-        return userRepository.findAll();
-    }
+    // ... Resto de métodos (getAll, getById, update, etc.) sin cambios ...
+    public List<User> getAll() { return userRepository.findAll(); }
+    public Optional<User> getById(Long id) { return userRepository.findById(id); }
+    public User save(User user) { return userRepository.save(user); }
+    public void delete(Long id) { userRepository.deleteById(id); }
 
-    public Optional<User> getById(Long id) {
-        return userRepository.findById(id);
-    }
-
-    public User save(User user) {
-        return userRepository.save(user);
-    }
-
-    public void delete(Long id) {
-        userRepository.deleteById(id);
-    }
-
-    // Método nuevo para actualizar usuario con Rol
     public void updateUser(UserUpdateRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         user.setNombreCompleto(request.nombreCompleto());
-
-        // Actualizar rol si viene en la petición
         if (request.rol() != null) {
             Role roleEntity = roleRepository.findByName(request.rol())
                     .orElseThrow(() -> new RuntimeException("Rol no válido"));
             user.setRol(roleEntity);
         }
-
         userRepository.save(user);
     }
 
     public void updateProfile(UserProfileUpdateRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         user.setNombreCompleto(request.nombreCompleto());
         user.setAvatar(request.avatar());
-
         if (request.password() != null && !request.password().isEmpty()) {
             user.setPassword(passwordEncoder.encode(request.password()));
         }
-
         userRepository.save(user);
     }
 
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
-    }
+    public List<Role> getAllRoles() { return roleRepository.findAll(); }
 }
