@@ -17,14 +17,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import jakarta.persistence.UniqueConstraint;
 
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "incidencias", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_incidencia_id_resource", columnNames = { "id", "recurso_id" })
-})
+@Table(name = "incidencias")
 @NoArgsConstructor
 public class Incidence {
 
