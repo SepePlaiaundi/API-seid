@@ -62,9 +62,18 @@ public class Camera implements Persistable<Integer> {
     @Enumerated(EnumType.STRING)
     private Estado estado = Estado.ACTIVA; // Activo o Eliminado
 
-    @Transient // Este campo no se guarda en BD, es solo para lógica
-    @JsonProperty(value = "new", access = JsonProperty.Access.WRITE_ONLY)
-    private boolean isNew = true;
+    @Transient
+    @JsonProperty(value = "new", access = JsonProperty.Access.READ_ONLY)
+    private boolean isNew;
+
+    @Transient
+    @JsonProperty(value = "recursoId", access = JsonProperty.Access.WRITE_ONLY)
+    public void setRecursoId(Integer id) {
+        if (id != null) {
+            this.recurso = new Recurso();
+            this.recurso.setId(id);
+        }
+    }
 
     // Manual Getters and Setters
     public Integer getIdModel() {
@@ -182,10 +191,13 @@ public class Camera implements Persistable<Integer> {
 
     @Override
     public boolean isNew() {
-        return isNew;
+        if (ultimaActualizacion == null) {
+            return true;
+        }
+        return ultimaActualizacion.isAfter(LocalDateTime.now().minusHours(2));
     }
 
     public void setNew(boolean aNew) {
-        isNew = aNew;
+        // Ignored, calculated dynamically
     }
 }

@@ -100,14 +100,6 @@ public class CameraController {
         return ResponseEntity.notFound().build();
     }
 
-    @PatchMapping(value = "/{id}/status")
-    public ResponseEntity<Camera> toggleStatus(@PathVariable Integer id) {
-        log.info("PATCH /camara/{}/status", id);
-        return cameraService.toggleStatus(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     @PatchMapping(value = "/{id}/visibility", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> toggleVisibility(@PathVariable Integer id) {
         log.info("PATCH /camara/{}/visibility", id);
