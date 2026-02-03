@@ -34,11 +34,11 @@ public class Camera implements Persistable<Integer> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_model")
-    @JsonIgnore
-    private Integer idModel;
+    private Integer id;
 
     @Column(name = "id")
-    private Integer id;
+    @JsonIgnore
+    private Integer externalId;
 
     private String direccion;
     private String nombre;
@@ -76,21 +76,20 @@ public class Camera implements Persistable<Integer> {
     }
 
     // Manual Getters and Setters
-    public Integer getIdModel() {
-        return idModel;
-    }
-
-    public void setIdModel(Integer idModel) {
-        this.idModel = idModel;
-    }
-
-    @Override
     public Integer getId() {
         return id;
     }
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(Integer externalId) {
+        this.externalId = externalId;
     }
 
     public String getDireccion() {

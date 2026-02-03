@@ -100,7 +100,7 @@ public class IncidenceController {
     private ResponseEntity<Response> processUpdate(Integer id, Incidence incidencia) {
         return incidenceService.getById(id)
                 .map(existing -> {
-                    incidencia.setIdModel(id);
+                    incidencia.setId(id);
                     return ResponseEntity.ok(incidenceService.save(incidencia));
                 })
                 .orElse(ResponseEntity.notFound().build());
