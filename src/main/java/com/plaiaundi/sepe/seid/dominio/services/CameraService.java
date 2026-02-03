@@ -223,7 +223,7 @@ public class CameraService {
 
         // 1. Extraemos todos los IDs externos de las cámaras que llegan
         List<Integer> idsExternos = camarasValidadas.stream()
-                .map(Camera::getId)
+                .map(Camera::getExternalId)
                 .toList();
 
         // 2. JPA: Traemos de la DB las posibles coincidencias (Entidades GESTIONADAS)
@@ -280,7 +280,7 @@ public class CameraService {
     private String generarClaveUnica(Camera c) {
         // Si el recurso es null, maneja la excepción o usa "0"
         int idRecurso = (c.getRecurso() != null) ? c.getRecurso().getId() : 0;
-        return c.getId() + "_" + idRecurso;
+        return c.getExternalId() + "_" + idRecurso;
     }
 
     // Helper para copiar propiedades (sin tocar IDs ni fechas de creación)

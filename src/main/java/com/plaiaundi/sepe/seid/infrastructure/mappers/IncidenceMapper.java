@@ -17,7 +17,7 @@ public class IncidenceMapper {
         }
 
         return new OpenDataIncidence(
-                entity.getId(),
+                entity.getExternalId(),
                 entity.getRecurso() != null ? entity.getRecurso().getId() : 0,
                 null,
                 entity.getProvincia(),
@@ -43,7 +43,7 @@ public class IncidenceMapper {
         }
 
         Incidence entity = new Incidence();
-        entity.setId(dto.incidenceId());
+        entity.setExternalId(dto.incidenceId());
         entity.setRecurso(recurso);
         entity.setProvincia(dto.province());
         entity.setCausa(dto.cause());

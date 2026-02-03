@@ -25,7 +25,7 @@ public class CameraMapper {
 
         return new OpenDataCamera(
                 entity.getDireccion(),
-                entity.getId(),
+                entity.getExternalId(),
                 entity.getNombre(),
                 entity.getKilometro(),
                 entity.getLatitud(),
@@ -42,7 +42,7 @@ public class CameraMapper {
 
         Camera entity = new Camera();
         entity.setDireccion(dto.address());
-        entity.setId(dto.cameraId());
+        entity.setExternalId(dto.cameraId());
         entity.setNombre(dto.cameraName());
         entity.setKilometro(dto.kilometer());
         entity.setLatitud(dto.latitude());

@@ -85,7 +85,7 @@ public class CameraController {
     private ResponseEntity<Camera> processUpdate(Integer id, Camera camera) {
         return cameraService.getById(id)
                 .map(existing -> {
-                    camera.setIdModel(id);
+                    camera.setId(id);
                     return ResponseEntity.ok(cameraService.save(camera));
                 })
                 .orElse(ResponseEntity.notFound().build());

@@ -18,8 +18,8 @@ public interface IncidenceRepository extends JpaRepository<Incidence, Integer> {
 
     List<Incidence> findAllByEstado(Estado activa);
 
-    @Query("SELECT i FROM Incidence i WHERE i.id IN :ids")
-    List<Incidence> findCandidatasPorIdsExternos(@Param("ids") List<Integer> idsExternos);
+    @Query("SELECT i FROM Incidence i WHERE i.externalId IN :idsExternos")
+    List<Incidence> findCandidatasPorIdsExternos(@Param("idsExternos") List<Integer> idsExternos);
 
     List<Incidence> findAllByTipo(String tipo);
 

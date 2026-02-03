@@ -31,11 +31,11 @@ public class Incidence {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_model")
-    @JsonIgnore
-    private Integer idModel;
+    private Integer id;
 
     @Column(name = "id")
-    private int id;
+    @JsonIgnore
+    private int externalId;
 
     @ManyToOne(cascade = { CascadeType.MERGE })
     @JoinColumn(name = "recurso_id")
@@ -78,20 +78,20 @@ public class Incidence {
     }
 
     // Manual Getters and Setters
-    public Integer getIdModel() {
-        return idModel;
-    }
-
-    public void setIdModel(Integer idModel) {
-        this.idModel = idModel;
-    }
-
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
+    }
+
+    public int getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(int externalId) {
+        this.externalId = externalId;
     }
 
     public Recurso getRecurso() {
