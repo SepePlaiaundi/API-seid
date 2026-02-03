@@ -79,6 +79,12 @@ public class CameraService {
     }
 
     public Camera save(Camera camera) {
+        // Aseguramos que el recurso esté completo si viene solo con ID
+        if (camera.getRecurso() != null) {
+            recursoRepository.findById(camera.getRecurso().getId())
+                    .ifPresent(camera::setRecurso);
+        }
+
         return cameraRepository.save(camera);
     }
 
@@ -92,8 +98,8 @@ public class CameraService {
     public Optional<Camera> toggleStatus(Integer id) {
         return cameraRepository.findById(id).map(camera -> {
             if (camera.getEstado() == Estado.ACTIVA) {
-                camera.setEstado(Estado.DESHABILITADA);
-            } else if (camera.getEstado() == Estado.DESHABILITADA) {
+                camera.setEstado(Estado.INACTIVA);
+            } else if (camera.getEstado() == Estado.INACTIVA) {
                 camera.setEstado(Estado.ACTIVA);
             }
             return cameraRepository.save(camera);
@@ -242,11 +248,16 @@ public class CameraService {
                 // --- CASO UPDATE ---
                 // Usamos el objeto DE LA DB (que tiene el id_model interno) y le pegamos los
                 // datos nuevos
-                actualizarDatos(camaraEnDB, camaraEntrante);
-                camaraEnDB.setNew(false);
-                camaraEnDB.setUltimaActualizacion(LocalDateTime.now());
-
-                listaFinalParaGuardar.add(camaraEnDB);
+                // Solo actualizamos fecha si realmente hubo cambios en los campos
+                if (actualizarDatos(camaraEnDB, camaraEntrante)) {
+                    camaraEnDB.setUltimaActualizacion(LocalDateTime.now());
+                    listaFinalParaGuardar.add(camaraEnDB);
+                } else {
+                    // Si no hubo cambios, no tocamos la fecha de modificación
+                    // Y no es necesario añadirlo a listaFinalParaGuardar a menos que quieras forzar
+                    // save
+                    // (aunque al ser entity gestionada, si no cambia nada, save es no-op)
+                }
             } else {
                 // --- CASO INSERT ---
                 // Es totalmente nueva, no existe esa combinación ID + Recurso
@@ -273,16 +284,45 @@ public class CameraService {
     }
 
     // Helper para copiar propiedades (sin tocar IDs ni fechas de creación)
-    private void actualizarDatos(Camera destino, Camera origen) {
-        destino.setNombre(origen.getNombre());
-        destino.setDireccion(origen.getDireccion());
-        destino.setKilometro(origen.getKilometro());
-        destino.setLatitud(origen.getLatitud());
-        destino.setLongitud(origen.getLongitud());
-        destino.setCarretera(origen.getCarretera());
-        destino.setUrlImage(origen.getUrlImage());
+    private boolean actualizarDatos(Camera destino, Camera origen) {
+        boolean cambiado = false;
+
+        if (!Objects.equals(destino.getNombre(), origen.getNombre())) {
+            destino.setNombre(origen.getNombre());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getDireccion(), origen.getDireccion())) {
+            destino.setDireccion(origen.getDireccion());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getKilometro(), origen.getKilometro())) {
+            destino.setKilometro(origen.getKilometro());
+            cambiado = true;
+        }
+        if (Double.compare(destino.getLatitud(), origen.getLatitud()) != 0) {
+            destino.setLatitud(origen.getLatitud());
+            cambiado = true;
+        }
+        if (Double.compare(destino.getLongitud(), origen.getLongitud()) != 0) {
+            destino.setLongitud(origen.getLongitud());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getCarretera(), origen.getCarretera())) {
+            destino.setCarretera(origen.getCarretera());
+            cambiado = true;
+        }
+        // Comparación de URL (toString para evitar resolución DNS que hace URL.equals)
+        String urlDest = (destino.getUrlImage() != null) ? destino.getUrlImage().toString() : null;
+        String urlOrig = (origen.getUrlImage() != null) ? origen.getUrlImage().toString() : null;
+        if (!Objects.equals(urlDest, urlOrig)) {
+            destino.setUrlImage(origen.getUrlImage());
+            cambiado = true;
+        }
+
         // NO tocamos 'id_model' (PK interna)
         // NO tocamos 'primeraInsercion'
+
+        return cambiado;
     }
 
     @Cacheable("camerasAPI")
@@ -311,5 +351,22 @@ public class CameraService {
 
         log.info("🏁 FIN: Sincronización de cámaras. Total cámaras procesadas: {}", camarasValidadas.size());
         return camarasValidadas;
+    }
+
+    public void changeVisibility(int id) {
+        Camera cam = cameraRepository.findById(id).get();
+        if (cam.getEstado() == Estado.ACTIVA) {
+            cam.setEstado(Estado.INACTIVA);
+        } else {
+            cam.setEstado(Estado.ACTIVA);
+        }
+        cameraRepository.save(cam);
+    }
+
+    public void setVisibility(int id, Estado estado) {
+        cameraRepository.findById(id).ifPresent(opt -> {
+            opt.setEstado(estado);
+            cameraRepository.save(opt);
+        });
     }
 }

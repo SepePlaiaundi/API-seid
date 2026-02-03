@@ -174,6 +174,10 @@ public class IncidenceService {
                             // 2. 🔥 NUEVO: Normalizamos coordenadas (UTM a GPS) antes de devolver
                             coordinateNormalizer.normalize(entity);
 
+                            if (entity.getLatitud() == 0.0 && entity.getLongitud() == 0.0) {
+                                return null;
+                            }
+
                             return entity;
                         }
                     } catch (Exception e) {
@@ -221,10 +225,12 @@ public class IncidenceService {
                 // --- CASO UPDATE ---
                 // Usamos el objeto DE LA DB (que tiene el id_model interno) y le pegamos los
                 // datos nuevos
-                actualizarDatos(incidenciaEnDB, incidenciaEntrante);
-                incidenciaEnDB.setUltimaActualizacion(LocalDateTime.now());
-
-                listaFinalParaGuardar.add(incidenciaEnDB);
+                if (actualizarDatos(incidenciaEnDB, incidenciaEntrante)) {
+                    incidenciaEnDB.setUltimaActualizacion(LocalDateTime.now());
+                    listaFinalParaGuardar.add(incidenciaEnDB);
+                } else {
+                    // Sin cambios, no actualizamos fecha ni guardamos (persistencia innecesaria)
+                }
             } else {
                 // --- CASO INSERT ---
                 // Es totalmente nueva, no existe esa combinación ID + Recurso
@@ -250,23 +256,68 @@ public class IncidenceService {
     }
 
     // Helper para copiar propiedades (sin tocar IDs ni fechas de creación)
-    private void actualizarDatos(Incidence destino, Incidence origen) {
-        // Copiamos los campos de datos generales
-        destino.setProvincia(origen.getProvincia());
-        destino.setCausa(origen.getCausa());
-        destino.setCiudad(origen.getCiudad());
-        destino.setFecIni(origen.getFecIni());
-        destino.setFecFin(origen.getFecFin());
-        destino.setCarretera(origen.getCarretera());
-        destino.setDireccion(origen.getDireccion());
-        destino.setLatitud(origen.getLatitud());
-        destino.setLongitud(origen.getLongitud());
-        destino.setNivel(origen.getNivel());
-        destino.setTipo(origen.getTipo());
-        destino.setDescripcion(origen.getDescripcion());
+    private boolean actualizarDatos(Incidence destino, Incidence origen) {
+        boolean cambiado = false;
+
+        if (!Objects.equals(destino.getProvincia(), origen.getProvincia())) {
+            destino.setProvincia(origen.getProvincia());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getCausa(), origen.getCausa())) {
+            destino.setCausa(origen.getCausa());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getCiudad(), origen.getCiudad())) {
+            destino.setCiudad(origen.getCiudad());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getFecIni(), origen.getFecIni())) {
+            destino.setFecIni(origen.getFecIni());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getFecFin(), origen.getFecFin())) {
+            destino.setFecFin(origen.getFecFin());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getCarretera(), origen.getCarretera())) {
+            destino.setCarretera(origen.getCarretera());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getDireccion(), origen.getDireccion())) {
+            destino.setDireccion(origen.getDireccion());
+            cambiado = true;
+        }
+        if (Double.compare(destino.getLatitud(), origen.getLatitud()) != 0) {
+            destino.setLatitud(origen.getLatitud());
+            cambiado = true;
+        }
+        if (Double.compare(destino.getLongitud(), origen.getLongitud()) != 0) {
+            destino.setLongitud(origen.getLongitud());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getNivel(), origen.getNivel())) {
+            destino.setNivel(origen.getNivel());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getTipo(), origen.getTipo())) {
+            destino.setTipo(origen.getTipo());
+            cambiado = true;
+        }
+        if (!Objects.equals(destino.getDescripcion(), origen.getDescripcion())) {
+            destino.setDescripcion(origen.getDescripcion());
+            cambiado = true;
+        }
 
         // Si quieres actualizar también la relación del recurso:
-        destino.setRecurso(origen.getRecurso());
+        // Comparamos por ID para evitar problemas de instancias
+        Integer idRecursoDest = (destino.getRecurso() != null) ? destino.getRecurso().getId() : null;
+        Integer idRecursoOrig = (origen.getRecurso() != null) ? origen.getRecurso().getId() : null;
+        if (!Objects.equals(idRecursoDest, idRecursoOrig)) {
+            destino.setRecurso(origen.getRecurso());
+            cambiado = true;
+        }
+
+        return cambiado;
     }
 
     @Cacheable("incidenciasAPI")
@@ -315,6 +366,12 @@ public class IncidenceService {
     public Response save(Incidence incidencia) {
         Response respuesta = new Response();
         try {
+            // Aseguramos que el recurso esté completo si viene solo con ID
+            if (incidencia.getRecurso() != null) {
+                recursoRepository.findById(incidencia.getRecurso().getId())
+                        .ifPresent(incidencia::setRecurso);
+            }
+
             incidencia = incidenceValidator.validar(incidencia);
             incidenceRepository.save(incidencia);
             respuesta.setMensaje("Incidencia guardada correctamente");
