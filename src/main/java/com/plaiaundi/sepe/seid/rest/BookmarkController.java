@@ -14,6 +14,8 @@ import java.util.List;
 @RequestMapping("/bookmarks")
 public class BookmarkController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BookmarkController.class);
+
     private final BookmarkService service;
 
     public BookmarkController(BookmarkService service) {
@@ -23,8 +25,8 @@ public class BookmarkController {
     @PostMapping("/add")
     public ResponseEntity<Void> add(
             @AuthenticationPrincipal UserDetails principal,
-            @RequestBody AddBookmarkRequest request
-    ) {
+            @RequestBody AddBookmarkRequest request) {
+        log.info("POST /bookmarks/add - User: {}, CameraId: {}", principal.getUsername(), request.cameraId());
         service.addBookmark(principal.getUsername(), request.cameraId());
         return ResponseEntity.ok().build();
     }
@@ -32,20 +34,19 @@ public class BookmarkController {
     @DeleteMapping("/{cameraId}")
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal UserDetails principal,
-            @PathVariable String cameraId
-    ) {
+            @PathVariable String cameraId) {
+        log.info("DELETE /bookmarks/{} - User: {}", cameraId, principal.getUsername());
         service.removeBookmark(principal.getUsername(), cameraId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
     public ResponseEntity<List<BookmarkResponse>> list(
-            @AuthenticationPrincipal UserDetails principal
-    ) {
-        List<BookmarkResponse> response =
-                service.getBookmarks(principal.getUsername()).stream()
-                        .map(b -> new BookmarkResponse(b.getCameraId()))
-                        .toList();
+            @AuthenticationPrincipal UserDetails principal) {
+        log.info("GET /bookmarks - User: {}", principal.getUsername());
+        List<BookmarkResponse> response = service.getBookmarks(principal.getUsername()).stream()
+                .map(b -> new BookmarkResponse(b.getCameraId()))
+                .toList();
 
         return ResponseEntity.ok(response);
     }

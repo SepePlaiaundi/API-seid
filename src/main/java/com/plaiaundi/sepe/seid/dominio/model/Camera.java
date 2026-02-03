@@ -18,15 +18,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import jakarta.persistence.UniqueConstraint;
+
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Persistable;
 
 @Entity
-@Table(name = "camaras", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_camara_id_resource", columnNames = { "id", "recurso_id" })
-})
+@Table(name = "camaras")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Camera implements Persistable<Integer> {

@@ -13,6 +13,8 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class RecursoController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RecursoController.class);
+
     private final RecursoServicio recursoServicio;
 
     public RecursoController(RecursoServicio recursoServicio) {
@@ -21,11 +23,13 @@ public class RecursoController {
 
     @GetMapping
     public List<Recurso> getAll() {
+        log.info("GET /recurso");
         return recursoServicio.getAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Recurso> getById(@PathVariable int id) {
+        log.info("GET /recurso/{}", id);
         return recursoServicio.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -33,21 +37,25 @@ public class RecursoController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public Recurso create(@RequestBody Recurso recurso) {
+        log.info("POST /recurso");
         return recursoServicio.save(recurso);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Recurso createMultipart(@ModelAttribute Recurso recurso) {
+        log.info("POST /recurso (multipart)");
         return recursoServicio.save(recurso);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Recurso> update(@PathVariable int id, @RequestBody Recurso recurso) {
+        log.info("PUT /recurso/{}", id);
         return processUpdate(id, recurso);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Recurso> updateMultipart(@PathVariable int id, @ModelAttribute Recurso recurso) {
+        log.info("PUT /recurso/{} (multipart)", id);
         return processUpdate(id, recurso);
     }
 
@@ -62,6 +70,7 @@ public class RecursoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id) {
+        log.info("DELETE /recurso/{}", id);
         if (recursoServicio.getById(id).isPresent()) {
             recursoServicio.delete(id);
             return ResponseEntity.ok().build();

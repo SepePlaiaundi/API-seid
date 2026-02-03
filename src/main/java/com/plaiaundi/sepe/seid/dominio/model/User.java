@@ -14,7 +14,7 @@ public class User {
 
     private String nombreCompleto;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String email;
 
     @JsonIgnore

@@ -72,16 +72,19 @@ public class IncidenceController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Response guardarIncidencia(@RequestBody Incidence incidencia) {
+        log.info("POST /incidencia");
         return incidenceService.save(incidencia);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Response guardarIncidenciaMultipart(@ModelAttribute Incidence incidencia) {
+        log.info("POST /incidencia/multipart");
         return incidenceService.save(incidencia);
     }
 
     @GetMapping(value = "/{id}/detail", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Incidence> getById(@PathVariable Integer id) {
+        log.info("GET /incidencia/{}/detail", id);
         return incidenceService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -89,11 +92,13 @@ public class IncidenceController {
 
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response> update(@PathVariable Integer id, @RequestBody Incidence incidencia) {
+        log.info("PUT /incidencia/{}", id);
         return processUpdate(id, incidencia);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response> updateMultipart(@PathVariable Integer id, @ModelAttribute Incidence incidencia) {
+        log.info("PUT /incidencia/{} (multipart)", id);
         return processUpdate(id, incidencia);
     }
 
@@ -108,6 +113,7 @@ public class IncidenceController {
 
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        log.info("DELETE /incidencia/{}", id);
         if (incidenceService.getById(id).isPresent()) {
             incidenceService.delete(id);
             return ResponseEntity.ok().build();
