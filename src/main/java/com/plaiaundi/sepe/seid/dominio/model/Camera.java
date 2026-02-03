@@ -65,7 +65,6 @@ public class Camera implements Persistable<Integer> {
     @JsonIgnore
     private boolean modificar = false;
 
-    @JsonIgnore
     @Enumerated(EnumType.STRING)
     private Estado estado = Estado.ACTIVA; // Activo o Eliminado
 
