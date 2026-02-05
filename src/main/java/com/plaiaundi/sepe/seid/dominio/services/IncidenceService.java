@@ -378,6 +378,10 @@ public class IncidenceService {
                 incidencia.setUltimaActualizacion(LocalDateTime.now());
             }
 
+            if (incidencia.getFecIni() == null) {
+                incidencia.setFecIni(LocalDateTime.now());
+            }
+
             incidenceRepository.save(incidencia);
             respuesta.setMensaje("Incidencia guardada correctamente");
         } catch (Exception e) {
